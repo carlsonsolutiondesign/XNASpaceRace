@@ -1,3 +1,9 @@
 ﻿################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
+/code.playcanvas.com
+/bootstrap.js
+/data.js
+/index.html
+/logo.png
+/files/assets
