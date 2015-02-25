@@ -40,6 +40,7 @@ pc.script.create('GameManager', function (context) {
 
         this.animationTimer = 0;
 
+        this.plainShader = null;
         this.previewShader = null;
 
         this.projId = null;
@@ -263,6 +264,58 @@ pc.script.create('GameManager', function (context) {
 
 
         CreateShaders: function (gd) {
+            this.CreatePlainShader(gd);
+            this.CreatePreviewShader(gd);
+        },
+
+
+        CreatePlainShader: function (gd) {
+            var shaderDefinition = {
+                attributes: {
+                    vertex_position: pc.SEMANTIC_POSITION,
+                    vertex_texCoord0: pc.SEMANTIC_TEXCOORD0
+                },
+                vshader: [
+                    "attribute vec3 vertex_position;",
+                    "attribute vec2 vertex_texCoord0;",
+                    "",
+                    "uniform mat4 matrix_viewProjection;",
+                    "uniform mat4 matrix_model;",
+                    "",
+                    "varying vec2 vUv0;",
+                    "varying vec3 worldPos;",
+                    "",
+                    "void main(void)",
+                    "{",
+                    "    mat4 modelMatrix = matrix_model;",
+                    "",
+                    "    vec4 positionW = modelMatrix * vec4(vertex_position, 1.0);",
+                    "    gl_Position = matrix_viewProjection * positionW;",
+                    "",
+                    "    vUv0 = vertex_texCoord0;",
+                    "    worldPos = positionW.xwz;",
+                    "}",
+                ].join("\n"),
+                fshader: [
+                    "precision highp float;",
+                    "",
+                    "uniform sampler2D texture_diffuseMap;",
+                    "",
+                    "varying vec2 vUv0;",
+                    "varying vec3 worldPos;",
+                    "",
+                    "void main(void)",
+                    "{",
+                    "    gl_FragColor = texture2D(texture_diffuseMap, vUv0);",
+                    "}",
+                ].join("\n")
+            };
+
+            this.plainShader = new pc.Shader(gd, shaderDefinition);
+        },
+
+
+        CreatePreviewShader: function (gd) {
             /*
                 SEMANTIC_POSITION - Vertex attribute to be treated as a position.
                 SEMANTIC_NORMAL - Vertex attribute to be treated as a normal.
@@ -365,7 +418,7 @@ pc.script.create('GameManager', function (context) {
                     "    vec2 uv0    = getUv0(data);",
                     "    vUv0        = uv0;",
                     "}",
-            ].join("\n"),
+                ].join("\n"),
                 fshader: [
                     "precision highp float;",
                     "",
@@ -692,7 +745,7 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        DrawModel: function (gd, model, world, view, projection, viewProjection, lighting) {
+        DrawModel: function (gd, technique, model, cameraPos, world, view, projection, viewProjection, lighting) {
 
             if (!gd || !model)
                 return;
@@ -737,12 +790,26 @@ pc.script.create('GameManager', function (context) {
                     if (material.shader) {
                         gd.setShader(material.shader);
                     } else {
-                        gd.setShader(this.previewShader);
+                        switch(technique) {
+                            case window.GameManager.RenderTechnique.PlainMapping:
+                                gd.setShader(this.plainShader);
+                                break;
+
+                            case window.GameManager.RenderTechnique.NormalMapping:
+                                gd.setShader(this.previewShader);
+                                break;
+
+                            default:
+                                gd.setShader(this.previewShader);
+                                break;
+                        }
                     }
 
                     if (lighting) {
                         this.SetLighting(gd, lighting);
                     }
+
+                    this.viewPosId.setValue(cameraPos.data);
 
                     this.counter++;
 
