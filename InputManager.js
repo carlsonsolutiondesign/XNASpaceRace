@@ -26,28 +26,8 @@ pc.script.create('InputManager', function (context) {
         this.dt = 0.3;
 
         // last time measure was taken and saved
-        //
-        // plldx plrdx pludy plddy
-        // [p]revious [l]eftstick [l]eft/[r]ight or [u]p/[d]own
-        //
-        // prldx prrdx prudy prddy
-        // [p]revious [r]ightstick [l]eft/[r]ight or [u]p/[d]own
-        this.plldx = [0, 0, 0, 0];
-        this.plrdx = [0, 0, 0, 0];
-        this.pludy = [0, 0, 0, 0];
-        this.plddy = [0, 0, 0, 0];
-
-        this.prldx = [0, 0, 0, 0];
-        this.prrdx = [0, 0, 0, 0];
-        this.prudy = [0, 0, 0, 0];
-        this.prddy = [0, 0, 0, 0];
-
-        this.pdldx = [0, 0, 0, 0];
-        this.pdrdx = [0, 0, 0, 0];
-        this.pdudy = [0, 0, 0, 0];
-        this.pdddy = [0, 0, 0, 0];
-
         this.pkeys = [];
+        this.ppads = [[], [], [], []];
     };
 
 
@@ -64,7 +44,7 @@ pc.script.create('InputManager', function (context) {
             this.root = context.root.getChildren()[0];
 
             this.elapsedTime = 0;
-            this.dt = 0.3;
+            this.dt = 0.25;
         },
 
 
@@ -137,7 +117,6 @@ pc.script.create('InputManager', function (context) {
                     return new pc.Vec2();
             }
             
-
             dx = context.gamepads.getAxis(pad, pc.PAD_R_STICK_X);
             dy = context.gamepads.getAxis(pad, pc.PAD_R_STICK_Y);
 
@@ -264,8 +243,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.isPressed(pad, pc.PAD_LEFT) && (this.elapsedTime - this.pdldx[player]) > this.dt) {
-                this.pdldx[player] = this.elapsedTime;
+            if (context.gamepads.isPressed(pad, pc.PAD_LEFT) && (!this.ppads[player][pc.PAD_LEFT] || (this.elapsedTime - this.ppads[player][pc.PAD_LEFT]) > this.dt)) {
+                this.ppads[player][pc.PAD_LEFT] = this.elapsedTime;
                 return true;
             }
 
@@ -290,8 +269,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.isPressed(pad, pc.PAD_RIGHT) && (this.elapsedTime - this.pdrdx[player]) > this.dt) {
-                this.pdrdx[player] = this.elapsedTime;
+            if (context.gamepads.isPressed(pad, pc.PAD_RIGHT) && (!this.ppads[player][pc.PAD_RIGHT] || (this.elapsedTime - this.ppads[player][pc.PAD_RIGHT]) > this.dt)) {
+                this.ppads[player][pc.PAD_RIGHT] = this.elapsedTime;
                 return true;
             }
 
@@ -316,8 +295,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.isPressed(pad, pc.PAD_UP) && (this.elapsedTime - this.pdudy[player]) > this.dt) {
-                this.pdudy[player] = this.elapsedTime;
+            if (context.gamepads.isPressed(pad, pc.PAD_UP) && (!this.ppads[player][pc.PAD_UP] || (this.elapsedTime - this.ppads[player][pc.PAD_UP]) > this.dt)) {
+                this.ppads[player][pc.PAD_UP] = this.elapsedTime;
                 return true;
             }
 
@@ -342,8 +321,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.isPressed(pad, pc.PAD_DOWN) && (this.elapsedTime - this.pdddy[player]) > this.dt) {
-                this.pdddy[player] = this.elapsedTime;
+            if (context.gamepads.isPressed(pad, pc.PAD_DOWN) && (!this.ppads[player][pc.PAD_DOWN] || (this.elapsedTime - this.ppads[player][pc.PAD_DOWN]) > this.dt)) {
+                this.ppads[player][pc.PAD_DOWN] = this.elapsedTime;
                 return true;
             }
 
@@ -368,7 +347,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_FACE_1)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_FACE_1) && (!this.ppads[player][pc.PAD_FACE_1] || (this.elapsedTime - this.ppads[player][pc.PAD_FACE_1]) > this.dt)) {
+                this.ppads[player][pc.PAD_FACE_1] = this.elapsedTime;
                 return true;
             }
 
@@ -393,7 +373,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_FACE_2)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_FACE_2) && (!this.ppads[player][pc.PAD_FACE_2] || (this.elapsedTime - this.ppads[player][pc.PAD_FACE_2]) > this.dt)) {
+                this.ppads[player][pc.PAD_FACE_2] = this.elapsedTime;
                 return true;
             }
 
@@ -418,7 +399,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_FACE_3)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_FACE_3) && (!this.ppads[player][pc.PAD_FACE_3] || (this.elapsedTime - this.ppads[player][pc.PAD_FACE_3]) > this.dt)) {
+                this.ppads[player][pc.PAD_FACE_3] = this.elapsedTime;
                 return true;
             }
 
@@ -443,7 +425,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_FACE_4)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_FACE_4) && (!this.ppads[player][pc.PAD_FACE_4] || (this.elapsedTime - this.ppads[player][pc.PAD_FACE_4]) > this.dt)) {
+                this.ppads[player][pc.PAD_FACE_4] = this.elapsedTime;
                 return true;
             }
 
@@ -468,7 +451,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_L_SHOULDER_1)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_L_SHOULDER_1) && (!this.ppads[player][pc.PAD_L_SHOULDER_1] || (this.elapsedTime - this.ppads[player][pc.PAD_L_SHOULDER_1]) > this.dt)) {
+                this.ppads[player][pc.PAD_L_SHOULDER_1] = this.elapsedTime;
                 return true;
             }
 
@@ -493,7 +477,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_R_SHOULDER_1)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_R_SHOULDER_1) && (!this.ppads[player][pc.PAD_R_SHOULDER_1] || (this.elapsedTime - this.ppads[player][pc.PAD_R_SHOULDER_1]) > this.dt)) {
+                this.ppads[player][pc.PAD_R_SHOULDER_1] = this.elapsedTime;
                 return true;
             }
 
@@ -518,7 +503,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_L_STICK_BUTTON)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_L_STICK_BUTTON) && (!this.ppads[player][pc.PAD_L_STICK_BUTTON] || (this.elapsedTime - this.ppads[player][pc.PAD_L_STICK_BUTTON]) > this.dt)) {
+                this.ppads[player][pc.PAD_L_STICK_BUTTON] = this.elapsedTime;
                 return true;
             }
 
@@ -543,7 +529,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_R_STICK_BUTTON)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_R_STICK_BUTTON) && (!this.ppads[player][pc.PAD_R_STICK_BUTTON] || (this.elapsedTime - this.ppads[player][pc.PAD_R_STICK_BUTTON]) > this.dt)) {
+                this.ppads[player][pc.PAD_R_STICK_BUTTON] = this.elapsedTime;
                 return true;
             }
 
@@ -553,7 +540,7 @@ pc.script.create('InputManager', function (context) {
         
         WasLeftStickUpPressed: function(player) {
 
-            var pad, cdy, dt;
+            var pad, cdy;
 
             switch (player) {
                 case 0:
@@ -569,10 +556,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdy = context.gamepads.getAxis(pad, pc.PAD_L_STICK_Y);
-            dt = this.elapsedTime - this.pludy[player];
 
-            if (cdy < -0.5 && dt >= this.dt) {
-                this.pludy[player] = this.elapsedTime;
+            if (cdy < -0.5 && (!this.ppads[player][pc.PAD_L_STICK_Y] || (this.elapsedTime - this.ppads[player][pc.PAD_L_STICK_Y]) >= this.dt)) {
+                this.ppads[player][pc.PAD_L_STICK_Y] = this.elapsedTime;
                 return true;
             }
 
@@ -582,7 +568,7 @@ pc.script.create('InputManager', function (context) {
         
         WasLeftStickDownPressed: function(player) {
             
-            var pad, cdy, dt;
+            var pad, cdy;
             
             switch(player) {
                 case 0:
@@ -598,10 +584,9 @@ pc.script.create('InputManager', function (context) {
             }
             
             cdy = context.gamepads.getAxis(pad, pc.PAD_L_STICK_Y);
-            dt = this.elapsedTime - this.plddy[player];
 
-            if (cdy > 0.5 && dt >= this.dt) {
-                this.plddy[player] = this.elapsedTime;
+            if (cdy > 0.5 && (!this.ppads[player][pc.PAD_L_STICK_Y] || (this.elapsedTime - this.ppads[player][pc.PAD_L_STICK_Y]) >= this.dt)) {
+                this.ppads[player][pc.PAD_L_STICK_Y] = this.elapsedTime;
                 return true;
             }
 
@@ -611,7 +596,7 @@ pc.script.create('InputManager', function (context) {
         
         WasLeftStickRightPressed: function(player) {
 
-            var pad, cdx, dt;
+            var pad, cdx;
 
             switch (player) {
                 case 0:
@@ -627,10 +612,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdx = context.gamepads.getAxis(pad, pc.PAD_L_STICK_X);
-            dt = this.elapsedTime - this.plrdx[player];
 
-            if (cdx > 0.5 && dt >= this.dt) {
-                this.plrdx[player] = this.elapsedTime;
+            if (cdx > 0.5 && (!this.ppads[player][pc.PAD_L_STICK_X] || (this.elapsedTime - this.ppads[player][pc.PAD_L_STICK_X]) >= this.dt)) {
+                this.ppads[player][pc.PAD_L_STICK_X] = this.elapsedTime;
                 return true;
             }
 
@@ -640,7 +624,7 @@ pc.script.create('InputManager', function (context) {
         
         WasLeftStickLeftPressed: function(player) {
 
-            var pad, cdx, dt;
+            var pad, cdx;
 
             switch (player) {
                 case 0:
@@ -656,10 +640,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdx = context.gamepads.getAxis(pad, pc.PAD_L_STICK_X);
-            dt = this.elapsedTime - this.plldx[player];
 
-            if (cdx < -0.5 && dt >= this.dt) {
-                this.plldx[player] = this.elapsedTime;
+            if (cdx < -0.5 && (!this.ppads[player][pc.PAD_L_STICK_X] || (this.elapsedTime - this.ppads[player][pc.PAD_L_STICK_X]) >= this.dt)) {
+                this.ppads[player][pc.PAD_L_STICK_X] = this.elapsedTime;
                 return true;
             }
 
@@ -669,7 +652,7 @@ pc.script.create('InputManager', function (context) {
         
         WasRightStickUpPressed: function(player) {
 
-            var pad, cdy, dt;
+            var pad, cdy;
 
             switch (player) {
                 case 0:
@@ -685,10 +668,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdy = context.gamepads.getAxis(pad, pc.PAD_R_STICK_Y);
-            dt = this.elapsedTime - this.prudy[player];
 
-            if (cdy < -0.5 && dt >= this.dt) {
-                this.prudy[player] = this.elapsedTime;
+            if (cdy < -0.5 && (!this.ppads[player][pc.PAD_R_STICK_Y] || (this.elapsedTime - this.ppads[player][pc.PAD_R_STICK_Y]) >= this.dt)) {
+                this.ppads[player][pc.PAD_R_STICK_Y] = this.elapsedTime;
                 return true;
             }
 
@@ -698,7 +680,7 @@ pc.script.create('InputManager', function (context) {
         
         WasRightStickDownPressed: function (player) {
 
-            var pad, cdy, dt;
+            var pad, cdy;
 
             switch (player) {
                 case 0:
@@ -714,10 +696,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdy = context.gamepads.getAxis(pad, pc.PAD_R_STICK_Y);
-            dt = this.elapsedTime - this.prddy[player];
 
-            if (cdy > 0.5 && dt >= this.dt) {
-                this.prddy[player] = this.elapsedTime;
+            if (cdy > 0.5 && (!this.ppads[player][pc.PAD_R_STICK_Y] || (this.elapsedTime - this.ppads[player][pc.PAD_R_STICK_Y]) >= this.dt)) {
+                this.ppads[player][pc.PAD_R_STICK_Y] = this.elapsedTime;
                 return true;
             }
 
@@ -727,7 +708,7 @@ pc.script.create('InputManager', function (context) {
         
         WasRightStickRightPressed: function(player) {
 
-            var pad, cdx, dt;
+            var pad, cdx;
 
             switch (player) {
                 case 0:
@@ -743,10 +724,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdx = context.gamepads.getAxis(pad, pc.PAD_R_STICK_X);
-            dt = this.elapsedTime - this.prrdx[player];
 
-            if (cdx > 0.5 && dt >= this.dt) {
-                this.prrdx[player] = this.elapsedTime;
+            if (cdx > 0.5 && (!this.ppads[player][pc.PAD_R_STICK_X] || (this.elapsedTime - this.ppads[player][pc.PAD_R_STICK_X]) >= this.dt)) {
+                this.ppads[player][pc.PAD_R_STICK_X] = this.elapsedTime;
                 return true;
             }
 
@@ -756,7 +736,7 @@ pc.script.create('InputManager', function (context) {
         
         WasRightStickLeftPressed: function(player) {
 
-            var pad, cdx, dt;
+            var pad, cdx;
 
             switch (player) {
                 case 0:
@@ -772,10 +752,9 @@ pc.script.create('InputManager', function (context) {
             }
 
             cdx = context.gamepads.getAxis(pad, pc.PAD_R_STICK_X);
-            dt = this.elapsedTime - this.prldx[player];
 
-            if (cdx < -0.5 && dt >= this.dt) {
-                this.prldx[player] = this.elapsedTime;
+            if (cdx < -0.5 && (!this.ppads[player][pc.PAD_R_STICK_X] || (this.elapsedTime - this.ppads[player][pc.PAD_R_STICK_X]) >= this.dt)) {
+                this.ppads[player][pc.PAD_R_STICK_X] = this.elapsedTime;
                 return true;
             }
 
