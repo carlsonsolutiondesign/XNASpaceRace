@@ -392,13 +392,13 @@ pc.script.create('PlayerScreen', function (context) {
                 if (this.realShipModels && this.realShipModels[0]) {
                     transform.setTranslate(0.0, 0.3, 0.0);
                     transform.mul(this.rotation[0]);
-                    //this.gameManager.DrawModel(gd, this.realShipModels[this.selection[0]], transform, view, projection, viewProjection, this.lighting);
+                    this.gameManager.DrawModel(gd, this.realShipModels[this.selection[0]], transform, view, projection, viewProjection, this.lighting);
                 }
 
                 // draw the pad model
                 if (this.realPadModel) {
                     transform.setTranslate(0.0, -0.4, 0.0);
-                    //this.gameManager.DrawModel(gd, this.realPadModel, transform, view, projection, viewProjection, this.lighting);
+                    this.gameManager.DrawModel(gd, this.realPadModel, transform, view, projection, viewProjection, this.lighting);
                 }
 
                 // save previous states
@@ -414,7 +414,7 @@ pc.script.create('PlayerScreen', function (context) {
                 // draw the pad halo model
                 if (this.realPadHaloModel) {
                     transform.setTranslate(0.0, -0.3, 0.0);
-                    this.gameManager.DrawModel(gd, this.realPadHaloModel, transform, view, projection, viewProjection, null);
+                    //this.gameManager.DrawModel(gd, this.realPadHaloModel, transform, view, projection, viewProjection, null);
                 }
 
                 // enable glow (alpha not zero)
