@@ -134,8 +134,8 @@ pc.script.create('LevelScreen', function (context) {
             var rect = new pc.Vec4().copy(pc.Vec4.ZERO);
 
             if (this.realLevelShotsTextures && this.realLevelShotsTextures[this.selection]) {
-                rect.x = (gd.canvas.offsetWidth - this.realLevelShotsTextures[this.selection].width) / 2.0;
-                rect.y = (gd.canvas.offsetHeight - this.realInvertYCheckTexture.height) + 30.0;
+                rect.x = (gd.width - this.realLevelShotsTextures[this.selection].width) / 2.0;
+                rect.y = (gd.height - this.realLevelShotsTextures[this.selection].height) / 2.0;
                 rect.z = this.realLevelShotsTextures[this.selection].width;
                 rect.w = this.realLevelShotsTextures[this.selection].height;
 
