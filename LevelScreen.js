@@ -79,7 +79,7 @@ pc.script.create('LevelScreen', function (context) {
 
                 context.assets.load(assets).then(function (resources) {
                     this.realSelectBackTexture = resources[window.LevelScreen.AssetLoadOrder.SelectBackTexture];
-                    this.realChangeLevelTexture = resource[window.LevelScreen.AssetLoadOrder.ChangeLevelTexture];
+                    this.realChangeLevelTexture = resources[window.LevelScreen.AssetLoadOrder.ChangeLevelTexture];
 
                     this.realLevelShotsTextures = [];
                     for (var x = 0; x < this.levelShotsTextures.length; x++) {
