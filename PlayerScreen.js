@@ -269,13 +269,13 @@ pc.script.create('PlayerScreen', function (context) {
                     }
 
                     // confirm selection
-                    if (inputManager.WasKeyPressed(i, pc.KEY_RETURN) || inputManager.WasAButtonPressed(i)) {
+                    if (inputManager.WasKeyPressed(i, pc.KEY_RETURN) || inputManager.WasAButtonPressed(i) || inputManager.WasStartButtonPressed(i)) {
                         this.confirmed[i] = true;
                         this.soundManager.PlaySound(SoundManager.Sound.MenuSelect);
                     }
 
                     // cancel and return to intro menu
-                    if (inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBButtonPressed(i)) {
+                    if (inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBButtonPressed(i) || inputManager.WasBackButtonPressed(i)) {
                         this.gameManager.SetShips(null, null, 0);
                         this.screenManager.SetNextScreen(ScreenManager.ScreenType.IntroScreen);
                         this.soundManager.PlaySound(SoundManager.Sound.MenuCancel);
@@ -425,7 +425,6 @@ pc.script.create('PlayerScreen', function (context) {
                 if (!this.confirmed[0] && this.realPadSelectModel) {
                     var t = new pc.Vec3(0.0, 0.0, 0.0);
                     var r = new pc.Quat();
-                    //r.setFromEulerAngles(0.0, this.elapsedTime, 0.0);
                     var scale = 1.0 + 0.03 * Math.cos(this.elapsedTime * 7.0);
                     var s = new pc.Vec3(scale, scale, scale);
 

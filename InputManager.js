@@ -193,7 +193,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
             
-            if (context.gamepads.wasPressed(pad, pc.PAD_SELECT)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_SELECT) && (!this.ppads[player][pc.PAD_SELECT] || (this.elapsedTime - this.ppads[player][pc.PAD_SELECT]) > this.dt)) {
+                this.ppads[player][pc.PAD_SELECT] = this.elapsedTime;
                 return true;
             }
 
@@ -218,7 +219,8 @@ pc.script.create('InputManager', function (context) {
                     return false;
             }
 
-            if (context.gamepads.wasPressed(pad, pc.PAD_START)) {
+            if (context.gamepads.isPressed(pad, pc.PAD_START) && (!this.ppads[player][pc.PAD_START] || (this.elapsedTime - this.ppads[player][pc.PAD_START]) > this.dt)) {
+                this.ppads[player][pc.PAD_START] = this.elapsedTime;
                 return true;
             }
 
