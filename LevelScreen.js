@@ -33,7 +33,7 @@ pc.script.create('LevelScreen', function (context) {
         this.realChangeLevelTexture = null;
 
         this.selection = 0;
-        this.levels = ["RedSpace", "DoubleSpace"];
+        this.levels = [];
 
         this.elapsedTime = 0.0;
     };
@@ -69,6 +69,7 @@ pc.script.create('LevelScreen', function (context) {
             if (focus) {
 
                 this.selection = 0;
+                this.levels = [window.GameManager.Levels.SmallSpace, window.GameManager.Levels.RedSpace];
 
                 var assets = [
                     context.assets.getAssetById(this.selectBackTexture),
@@ -108,7 +109,7 @@ pc.script.create('LevelScreen', function (context) {
 
                 // select
                 if (inputManager.WasKeyPressed(i, pc.KEY_RETURN) || inputManager.WasAButtonPressed(i) || inputManager.WasStartButtonPressed(i)) {
-                    //this.gameManager.SetLevel(this.levels[this.selection]);
+                    this.gameManager.SetLevel(this.levels[this.selection]);
                     this.screenManager.SetNextScreen(ScreenManager.ScreenType.GameScreen);
                     this.soundManager.PlaySound(SoundManager.Sound.MenuSelect);
                 }

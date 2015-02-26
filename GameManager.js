@@ -107,12 +107,64 @@ pc.script.create('GameManager', function (context) {
 
     window.GameManager =
     {
-        Levels: Object.freeze({ RedSpace: 0, DoubleSpace: 1 }),
+        Levels: Object.freeze({ SmallSpace: 0, RedSpace: 1, DoubleSpace: 2 }),
     };
 
+    window.GameManager.LevelIds = Object.freeze([
+        { name: window.GameManager.Levels.SmallSpace, id: "353946" },
+        { name: window.GameManager.Levels.RedSpace, id: "352304" },
+        { name: window.GameManager.Levels.DoubleSpace, id: "352639" }
+    ]);
+
+    window.GameManager.GameMode = Object.freeze({None: 0, SinglePlayer: 1, MultiPlayer: 2});
+    window.GameManager.MaxPlayers = 2;
+        
+    window.GameManager.RenderTechnique = Object.freeze(
+    {
+        PlainMapping: 0,                        // plain texture mapping
+        NormalMapping: 1,                       // normal mapping
+        ViewMapping: 2                          // view aligned mapping (used for blaster)
+    });
+
+    window.GameManager.AnimSpriteType = Object.freeze(
+    {
+        Blaster: 0,                             // blaster hit
+        Missle: 1,                              // missle explode
+        Ship: 2,                                // ship explode
+        Spawn: 3,                               // ship/object spawn
+        Shield: 4                               // ship shield
+    });
+
+    window.GameManager.ProjectileType = Object.freeze(
+    {
+        Blaster: 0,                             // blaster projectile
+        Missle: 1                               // missle projectile
+    });
+    
+    window.GameManager.ParticleSystemType = Object.freeze(
+    {
+        ShipExplode: 0,                         // ship explode
+        ShipTrail: 1,                           // ship trail
+        MissleExplode: 2,                       // missle explode
+        MissleTrail: 3,                         // missle trail
+        BlasterExplode: 4                       // blaster explode
+    });
+
+    window.GameManager.PowerupType = Object.freeze(
+    {
+        Energy: 0,                              // 50% energy
+        Missle: 1                               // 3 missles
+    });
+
+
+/*
     window.GameManager =
     {
-        LevelIds: Object.freeze([{ name: window.GameManager.Levels.RedSpace, id: "352304" }, { name: window.GameManager.Levels.DoubleSpace, id: "352639" }]),
+        LevelIds: Object.freeze([
+            { name: window.GameManager.Levels.SmallSpace, id: "353946" },
+            { name: window.GameManager.Levels.RedSpace, id: "352304" },
+            { name: window.GameManager.Levels.DoubleSpace, id: "352639" }
+        ]),
 
         GameMode: Object.freeze({None: 0, SinglePlayer: 1, MultiPlayer: 2}),
         MaxPlayers: 2,
@@ -154,7 +206,7 @@ pc.script.create('GameManager', function (context) {
             Missle: 1                               // 3 missles
         })
     };
-
+*/
     
     GameManager.prototype = {
 
@@ -189,16 +241,38 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        onLoadLevel: function (levelEnum) {
+        SetLevel: function (levelEnum) {
 
-            //Levels: Object.freeze({ RedSpace: 0, DoubleSpace: 1 }),
-            //LevelIds: Object.freeze([{ name: RedSpace, id: "352304" }, { name: DoubleSpace, id: "352639" }]),
             if (window.GameManager.LevelIds && window.GameManager.LevelIds.length > 0) {
 
                 var idx = 0;
                 var found = false;
                 for (idx = 0; idx < window.GameManager.LevelIds.length; idx++) {
-                    if (window.GameManager.LevelIds[idx].name === this.currentLevel) {
+                    if (window.GameManager.LevelIds[idx].name === levelEnum) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    this.screenManager.onLoadMenu();
+                    return;
+                }
+
+                this.currentLevel = window.GameManager.LevelIds[idx].name;
+                this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
+            }
+        },
+
+
+        onLoadLevel: function (levelEnum) {
+
+            if (window.GameManager.LevelIds && window.GameManager.LevelIds.length > 0) {
+
+                var idx = 0;
+                var found = false;
+                for (idx = 0; idx < window.GameManager.LevelIds.length; idx++) {
+                    if (window.GameManager.LevelIds[idx].name === levelEnum) {
                         found = true;
                         break;
                     }
@@ -811,8 +885,6 @@ pc.script.create('GameManager', function (context) {
 
                     this.viewPosId.setValue(cameraPos.data);
 
-                    this.counter++;
-
                     var parameters = material.parameters;
                     for (var paramName in parameters) {
                         var parameter = parameters[paramName];
@@ -820,10 +892,6 @@ pc.script.create('GameManager', function (context) {
                             parameter.scopeId = gd.scope.resolve(paramName);
                         }
                         parameter.scopeId.setValue(parameter.data);
-
-                        if (this.counter < 3) {
-                            console.log("paramName = " + paramName + "  parameter = " + parameter + "  scopeId = " + parameter.scopeId + "  parameter.data = " + parameter.data);
-                        }
                     }
 
                     this.alphaTestId.setValue(material.alphaTest);
