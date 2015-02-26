@@ -32,6 +32,7 @@ pc.script.create('LevelScreen', function (context) {
         this.realSelectBackTexture = null;
         this.realChangeLevelTexture = null;
 
+        this.selection = 0;
         this.levels = ["RedSpace", "DoubleSpace"];
 
         this.elapsedTime = 0.0;
@@ -56,6 +57,7 @@ pc.script.create('LevelScreen', function (context) {
             this.gameManager = this.root.script.GameManager;
             this.soundManager = this.root.script.SoundManager;
 
+            this.selection = 0;
             this.elapsedTime = 0.0;
         },
         
@@ -63,6 +65,8 @@ pc.script.create('LevelScreen', function (context) {
         SetFocus: function (focus) {
 
             if (focus) {
+
+                this.selection = 0;
 
                 var assets = [
                     context.assets.getAssetById(this.selectBackTexture),
@@ -120,7 +124,23 @@ pc.script.create('LevelScreen', function (context) {
         },
         
         
-        Draw2D: function(gd, fontManager) {
+        Draw2D: function (gd, fontManager) {
+
+            if (!gd)
+                return;
+
+            var white = new pc.Vec4().copy(pc.Vec4.ONE);
+
+            var rect = new pc.Vec4().copy(pc.Vec4.ZERO);
+
+            if (this.realLevelShotsTextures && this.realLevelShotsTextures[this.selection]) {
+                rect.x = (gd.canvas.offsetWidth - this.realLevelShotsTextures[this.selection].width) / 2.0;
+                rect.y = (gd.canvas.offsetHeight - this.realInvertYCheckTexture.height) + 30.0;
+                rect.z = this.realLevelShotsTextures[this.selection].width;
+                rect.w = this.realLevelShotsTextures[this.selection].height;
+
+                this.screenManager.DrawTexture(gd, this.realLevelShotsTextures[this.selection], rect, white, ScreenManager.BlendMode.AlphaBlending);
+            }
         }
     };
 
