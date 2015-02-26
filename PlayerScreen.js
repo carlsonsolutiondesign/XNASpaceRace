@@ -378,8 +378,8 @@ pc.script.create('PlayerScreen', function (context) {
             var target = new pc.Vec3().copy(pc.Vec3.ZERO);
             var upDir = new pc.Vec3().copy(pc.Vec3.UP);
 
-            //var view = new pc.Mat4().setLookAt(cameraPos, target, upDir);
-            var view = this.setLookAt(cameraPos, target, upDir);
+            var view = new pc.Mat4().setLookAt(cameraPos, target, upDir);
+            view.invert();
             var viewProjection = new pc.Mat4();
 
             viewProjection.mul2(projection, view);
@@ -413,10 +413,10 @@ pc.script.create('PlayerScreen', function (context) {
                 gd.setDepthTest(false);
 
                 // draw the pad halo model
-                if (this.realPadHaloModel) {
-                    transform.setTranslate(0.0, -0.3, 0.0);
+                //if (this.realPadHaloModel) {
+                //    transform.setTranslate(0.0, -0.3, 0.0);
                     //this.gameManager.DrawModel(gd, GameManager.RenderTechnique.PlainMapping, this.realPadHaloModel, cameraPos, transform, view, projection, viewProjection, null);
-                }
+                //}
 
                 // enable glow (alpha not zero)
                 this.screenManager.SetAlphaBlending();
@@ -544,39 +544,3 @@ pc.script.create('PlayerScreen', function (context) {
 
     return PlayerScreen;
 });
-
-/*
-pc.Mat4.prototype.setLookAt = function (pos, target, upDir) {
-
-    var forward = new pc.Vec3().sub2(pos, target).normalize();
-    var left    = new pc.Vec3().cross(upDir, forward).normalize();
-    var up      = new pc.Vec3().cross(forward, left).normalize();
-
-    // set inverse translation matrix: Mt
-    var matTrans = new pc.Mat4();
-    matTrans.data[0]  = matTrans.data[5] = matTrans.data[10] = matTrans.data[15] = 1.0;
-    matTrans.data[3]  = -pos.x;
-    matTrans.data[7]  = -pos.y;
-    matTrans.data[11] = -pos.z;
-
-    // set inverse of rotation matrix: Mr
-    // NOTE: M^-1 = M^T if it is Euclidean transform
-    var matRot = new pc.Mat4();
-    matRot.data[0]  = left.x;     matRot.data[4] = left.y;     matRot.data[8]  = left.z;
-    matRot.data[1]  = up.x;       matRot.data[5] = up.y;       matRot.data[9]  = up.z;
-    matRot.data[2]  = forward.x;  matRot.data[6] = forward.y;  matRot.data[10] = forward.z;
-    matRot.data[15] = 1.0;
-
-    var invPos = new pc.Vec3().copy(pos);
-    invPos.scale(-1);
-
-    // compute M = Mr * Mt
-    var m = this.data;
-    m[0] = left.x;     m[4] = left.y;     m[8]  = left.z;     m[12] = left.dot(invPos);
-    m[1] = up.x;       m[5] = up.y;       m[9]  = up.z;       m[13] = up.dot(invPos);
-    m[2] = forward.x;  m[6] = forward.y;  m[10] = forward.z;  m[14] = forward.dot(invPos);
-    m[3] = 0.0;        m[7] = 0.0;        m[11] = 0.0;        m[15] = 1.0;
-
-    return this;
-};
-*/
