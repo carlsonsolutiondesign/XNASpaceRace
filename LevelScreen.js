@@ -1,4 +1,4 @@
-pc.script.attribute('levelShotsTexture', 'asset', [],
+pc.script.attribute('levelShotsTextures', 'asset', [],
 {
     type: 'texture',
     max: 2
@@ -91,7 +91,12 @@ pc.script.create('LevelScreen', function (context) {
         },
         
         
-        ProcessInput: function(dt, inputManager) {
+        ProcessInput: function (dt, inputManager) {
+
+            if (inputManager.WasKeyPressed(i, pc.KEY_RETURN) || inputManager.WasAButtonPressed(i) || inputManager.WasStartButtonPressed(i)) {
+                this.soundManager.PlaySound(SoundManager.Sound.MenuSelect);
+                this.screenManager.SetNextScreen(ScreenManager.ScreenType.GameScreen);
+            }
         },
         
         
