@@ -40,6 +40,8 @@ pc.script.create('LevelScreen', function (context) {
 
     window.LevelScreen =
     {
+        MaxLevels: 2,
+
         AssetLoadOrder: Object.freeze(
         {
             SelectBackTexture: 0,
@@ -97,9 +99,42 @@ pc.script.create('LevelScreen', function (context) {
         
         ProcessInput: function (dt, inputManager) {
 
-            if (inputManager.WasKeyPressed(i, pc.KEY_RETURN) || inputManager.WasAButtonPressed(i) || inputManager.WasStartButtonPressed(i)) {
-                this.soundManager.PlaySound(SoundManager.Sound.MenuSelect);
-                this.screenManager.SetNextScreen(ScreenManager.ScreenType.GameScreen);
+            if (!inputManager)
+                return;
+
+            var j = this.gameManager.gameMode;
+
+            for (var i = 0; i < j; i++) {
+
+                // select
+                if (inputManager.WasKeyPressed(i, pc.KEY_RETURN) || inputManager.WasAButtonPressed(i) || inputManager.WasStartButtonPressed(i)) {
+                    //this.gameManager.SetLevel(this.levels[this.selection]);
+                    this.screenManager.SetNextScreen(ScreenManager.ScreenType.GameScreen);
+                    this.soundManager.PlaySound(SoundManager.Sound.MenuSelect);
+                }
+
+                // cancel
+                if (inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBButtonPressed(i) || inputManager.WasBackButtonPressed(i)) {
+                    //this.gameManager.SetLevel(null);
+                    this.screenManager.SetNextScreen(ScreenManager.ScreenType.PlayerScreen);
+                    this.soundManager.PlaySound(SoundManager.Sound.MenuCancel);
+                }
+
+                // change level (next)
+                if (inputManager.WasKeyPressed(i, pc.KEY_RIGHT) || inputManager.WasDPadRightButtonPressed(i) || inputManager.WasLeftStickRightPressed(i)) {
+                    this.selection = (this.selection + 1) % window.LevelScreen.MaxLevels;
+                    this.soundManager.PlaySound(SoundManager.Sound.MenuChange);
+                }
+
+                // change level (previous)
+                if (inputManager.WasKeyPressed(i, pc.KEY_LEFT) || inputManager.WasDPadLeftButtonPressed(i) || inputManager.WasLeftStickLeftPressed(i)) {
+                    if (this.selection === 0)
+                        this.selection = window.LevelScreen.MaxLevels - 1;
+                    else
+                        this.selection = this.selection - 1;
+
+                    this.soundManager.PlaySound(SoundManager.Sound.MenuChange);
+                }
             }
         },
         
@@ -133,6 +168,7 @@ pc.script.create('LevelScreen', function (context) {
 
             var rect = new pc.Vec4().copy(pc.Vec4.ZERO);
 
+            // draw the level screenshot
             if (this.realLevelShotsTextures && this.realLevelShotsTextures[this.selection]) {
                 rect.x = (gd.width - this.realLevelShotsTextures[this.selection].width) / 2.0;
                 rect.y = (gd.height - this.realLevelShotsTextures[this.selection].height) / 2.0;
@@ -140,6 +176,27 @@ pc.script.create('LevelScreen', function (context) {
                 rect.w = this.realLevelShotsTextures[this.selection].height;
 
                 this.screenManager.DrawTexture(gd, this.realLevelShotsTextures[this.selection], rect, white, ScreenManager.BlendMode.AlphaBlending);
+            }
+
+
+            // draw the back and select buttons
+            if (this.realSelectBackTexture) {
+                rect.x = (gd.width - this.realSelectBackTexture.width) / 2.0;
+                rect.y = 30.0;
+                rect.z = this.realSelectBackTexture.width;
+                rect.w = this.realSelectBackTexture.height;
+
+                this.screenManager.DrawTexture(gd, this.realSelectBackTexture, rect, white, ScreenManager.BlendMode.AlphaBlending);
+            }
+
+
+            // draw change level
+            if (this.realChangeLevelTexture) {
+                rect.x = (gd.width - this.realChangeLevelTexture.width) / 2.0;
+                rect.y = (gd.height - this.realChangeLevelTexture.height) - 60.0;
+                rect.z = this.realChangeLevelTexture.width;
+                rect.w = this.realChangeLevelTexture.height;
+                this.screenManager.DrawTexture(gd, this.realChangeLevelTexture, rect, white, ScreenManager.BlendMode.AlphaBlending);
             }
         }
     };
