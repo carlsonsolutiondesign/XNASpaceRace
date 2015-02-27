@@ -816,8 +816,10 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        GetPlayer: function (gd) {
-
+        GetPlayer: function (i) {
+            if (this.players && this.players[i]) {
+                return this.players[i].script.PlayerShip;
+            }
         },
 
 

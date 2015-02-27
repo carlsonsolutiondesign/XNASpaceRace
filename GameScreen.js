@@ -36,7 +36,9 @@ pc.script.create('GameScreen', function (context) {
             this.gameManager.Update(dt);
 
             for (var i = 0; i < this.gameManager.gameMode; i++) {
-                if (this.gameManager.GetPlayer(i).Score == GameOptions.MaxPoints) {
+                var player = this.gameManager.GetPlayer(i);
+
+                if (player && player.score >= GameOptions.MaxPoints) {
                     this.screenManager.SetNextScreen(ScreenManager.ScreneType.EndScreen, GameOptions.FadeColor, GameOptions.FadeTime);
                 }
             }
