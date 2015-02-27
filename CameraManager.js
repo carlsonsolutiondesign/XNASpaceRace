@@ -109,6 +109,11 @@ pc.script.create('CameraManager', function (context) {
                 var ez = 0;
                 ez -= context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_R_SHOULDER_2);
                 ez += context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_L_SHOULDER_2);
+                if (context.keyboard.isPressed(pc.KEY_L)) {
+                    ez -= 1;
+                } else if (context.keyboard.isPressed(pc.KEY_H)) {
+                    ez += 1;
+                }
 
                 var dA = this.itsAngularVelocity * dt;
                 this.target.getParent().rotateLocal(-(dA * ey), -(dA * ex), dA * ez);
@@ -131,6 +136,12 @@ pc.script.create('CameraManager', function (context) {
                 var dy = 0;
                 dy += context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_L_STICK_BUTTON);
                 dy -= context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_R_STICK_BUTTON);
+                if (context.keyboard.isPressed(pc.KEY_J)) {
+                    dy -= 1;
+                } else if (context.keyboard.isPressed(pc.KEY_K)) {
+                    dy += 1;
+                }
+
 
                 this.target.getParent().translateLocal(this.itsLinearVelocity * dt * dx, this.itsRateOfAscension * dy, this.itsLinearVelocity * dt * dz);
             }
