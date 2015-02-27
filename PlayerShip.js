@@ -1,7 +1,7 @@
 pc.script.create('PlayerShip', function (context) {
 
     // Creates a new PlayerShip instance
-    var PlayShip = function (entity) {
+    var PlayerShip = function (entity) {
         this.entity = entity;
     };
 
