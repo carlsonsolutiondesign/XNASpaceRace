@@ -226,7 +226,7 @@ pc.script.create('GameManager', function (context) {
             this.currentLevel = 0; //window.GameManager.Levels.RedSpace;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
-            this.players = [new PlayerShip(), new PlayerShip()];
+            this.players = [new pc.script.PlayerShip(), new pc.script.PlayerShip()];
             this.counter = 0;
         },
         
