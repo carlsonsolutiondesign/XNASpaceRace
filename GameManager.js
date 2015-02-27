@@ -794,6 +794,11 @@ pc.script.create('GameManager', function (context) {
         },
 
 
+        GetPlayer: function (gd) {
+
+        },
+
+
         SetLighting: function (gd, lighting) {
 
             var lights = lighting.lights;

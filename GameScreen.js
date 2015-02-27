@@ -33,7 +33,7 @@ pc.script.create('GameScreen', function (context) {
         
         
         Update: function (dt) {
-            gameManager.Update(dt);
+            this.gameManager.Update(dt);
 
             for (var i = 0; i < this.gameManager.gameMode; i++) {
                 if (this.gameManager.GetPlayer(i).Score == GameOptions.MaxPoints) {
