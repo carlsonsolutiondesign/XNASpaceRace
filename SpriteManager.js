@@ -36,6 +36,7 @@ pc.script.create('SpriteManager', function (context) {
         
         this.projection = null;
         this.modelView = null;
+        this.texRotation = null;
     };
 
     window.SpriteManager =
@@ -69,28 +70,40 @@ pc.script.create('SpriteManager', function (context) {
         },
 
 
-        RenderSprite: function(gd, technique, texture, color, x, y, width, height) {
+        RenderSprite: function(gd, technique, texture, color, x, y, width, height, rotation) {
 
             if(!gd)
                 return;
 
             this.projection = new pc.Mat4().setOrtho(0, gd.width, gd.height, 0, 0.1, 1000.0);
             this.modelView = new pc.Mat4().setTranslate(0.0, 0.0, -1.0);
+            this.texRotation = new pc.Mat4().setIdentity();
+
+            if (rotation != 0.0) {
+                var t1 = new pc.Mat4().setTranslate(0.5, 0.5, 0.0);
+                var t2 = new pc.Mat4().setTranslate(-0.5, -0.5, 0.0);
+                var r = new pc.Mat4().setFromEulerAngles(0.0, 0.0, rotation);
+                this.texRotation.setIdentity();
+                this.texRotation.mul(t1);
+                this.texRotation.mul(r);
+                this.texRotation.mul(t2);
+            }
 
             this.UpdateVertexBuffer(gd, x, y, width, height);
 
             switch (technique) {
-                case window.BlurManager.BlurTechnique.Color:
+                case window.SpriteManager.RenderTechnique.Color:
                     gd.setShader(this.colorShader);
                     gd.scope.resolve("projection").setValue(this.projection.data);
                     gd.scope.resolve("modelView").setValue(this.modelView.data);
                     gd.scope.resolve("modColor").setValue(color.data);
                     break;
 
-                case window.BlurManager.BlurTechnique.ColorTexture:
+                case window.SpriteManager.RenderTechnique.ColorTexture:
                     gd.setShader(this.colorTextureShader);
                     gd.scope.resolve("projection").setValue(this.projection.data);
                     gd.scope.resolve("modelView").setValue(this.modelView.data);
+                    gd.scope.resolve("rotation").setValue(this.texRotation.data);
                     gd.scope.resolve("modColor").setValue(color.data);
                     gd.scope.resolve("theColorMap").setValue(texture);
                     break;
@@ -187,6 +200,7 @@ pc.script.create('SpriteManager', function (context) {
                     "void main(void)",
                     "{",
                     "   theTextureCoord = aTexCoord;",
+                    "",
                     "   gl_Position = projection * modelView * vec4(aPosition.xy, 0.5, 1.0);",
                     "}"
                 ].join("\n"),
@@ -194,13 +208,16 @@ pc.script.create('SpriteManager', function (context) {
                     "precision " + context.graphicsDevice.precision + " float;",
                     "",
                     "uniform vec4 modColor;",
+                    "uniform mat4 rotation;",
                     "uniform sampler2D theColorMap;",
                     "",
                     "varying vec2 theTextureCoord;",
                     "",
                     "void main(void)",
                     "{",
-                    "    vec4 theColor = modColor * texture2D(theColorMap, theTextureCoord);",
+                    "    vec2 uv = (rotation * vec4(theTextureCoord, 0, 1)).xy;",
+                    "",
+                    "    vec4 theColor = modColor * texture2D(theColorMap, uv);",
                     "    gl_FragColor = theColor;",
                     "}"
                 ].join("\n")

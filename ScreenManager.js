@@ -450,11 +450,13 @@ pc.script.create('ScreenManager', function (context) {
         },
         
         
-        DrawTexture: function(gd, texture, rect, color, blendMode) {
+        DrawTexture: function(gd, texture, rect, color, blendMode, rotation) {
 
             if(!gd || !texture)
                 return;
             
+            if (typeof (rotation) === 'undefined') rotation = 0.0;
+
             var prevBlending = gd.getBlending();
             var prevDepthWrite = gd.getDepthWrite();
             var prevDepthTest  = gd.getDepthTest();
@@ -476,7 +478,7 @@ pc.script.create('ScreenManager', function (context) {
                     break;
             }
             
-            this.spriteManager.RenderSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, color, rect.x, rect.y, rect.z, rect.w);
+            this.spriteManager.RenderSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, color, rect.x, rect.y, rect.z, rect.w, rotation);
             
             gd.setDepthTest(prevDepthTest);
             gd.setDepthWrite(prevDepthWrite);

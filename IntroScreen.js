@@ -79,6 +79,8 @@ pc.script.create('IntroScreen', function (context) {
         this.menuTime = 0.0;
         
         this.NumberOfMenuItems = 4;
+
+        this.cursorRotationVelocity = 0.0; //40.0;
     };
 
 
@@ -119,7 +121,7 @@ pc.script.create('IntroScreen', function (context) {
                 context.assets.load(assets).then(function(resources) {
                     this.realLogoTexture = resources[0];
                     this.realLensTexture = resources[1];
-                    this.realCusrorAnimTexture = resources[2];
+                    this.realCursorAnimTexture = resources[2];
                     this.realCursorBulletTexture = resources[3];
                     this.realCursorArrowTexture = resources[4];
                     
@@ -285,7 +287,7 @@ pc.script.create('IntroScreen', function (context) {
         DrawCursor: function (gd, x, y) {
 
             var rect = new pc.Vec4().copy(pc.Vec4.ZERO);
-            var rotation = this.menuTime * 2.0;
+            var rotation = this.menuTime * this.cursorRotationVelocity;
 
             var white = new pc.Vec4().copy(pc.Vec4.ONE);
 
@@ -295,8 +297,7 @@ pc.script.create('IntroScreen', function (context) {
                 rect.y = y - this.realCursorAnimTexture.height / 2;
                 rect.z = this.realCursorAnimTexture.width;
                 rect.w = this.realCursorAnimTexture.height;
-                //this.screenManager.DrawTexture(gd, this.realCursorAnimTexture, rect, rotation, white, ScreenManager.BlendMode.AlphaBlending);
-                this.screenManager.DrawTexture(gd, this.realCursorAnimTexture, rect, white, ScreenManager.BlendMode.AlphaBlending);
+                this.screenManager.DrawTexture(gd, this.realCursorAnimTexture, rect, white, ScreenManager.BlendMode.AlphaBlending, rotation);
             }
 
 
