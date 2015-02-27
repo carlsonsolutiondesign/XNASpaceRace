@@ -17,35 +17,67 @@
 // Matrices (Mat4)         - http://developer.playcanvas.com/en/engine/api/stable/symbols/pc.Mat4.html
 // Vectors (Vec3)          - http://developer.playcanvas.com/en/engine/api/stable/symbols/pc.Vec3.html
 //------------------------------------------------------------------------------------------------------------------------
-pc.script.attribute('crosshairTexture', 'asset', [],
+pc.script.attribute('spCrosshairTexture', 'asset', [],
 {
     type: 'texture',
     max: 1
 });
 
-pc.script.attribute('scoreTexture', 'asset', [],
+pc.script.attribute('spScoreTexture', 'asset', [],
 {
     type: 'texture',
     max: 1
 });
 
-pc.script.attribute('missileTexture', 'asset', [],
+pc.script.attribute('spMissileTexture', 'asset', [],
 {
     type: 'texture',
     max: 1
 });
 
-pc.script.attribute('energyTexture', 'asset', [],
+pc.script.attribute('spEnergyTexture', 'asset', [],
 {
     type: 'texture',
     max: 1
 });
 
-pc.script.attribute('hudBarsTexture', 'asset', [],
+pc.script.attribute('spHUDBarsTexture', 'asset', [],
 {
     type: 'texture',
     max: 1
 });
+
+
+pc.script.attribute('mpCrosshairTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('mpScoreTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('mpMissileTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('mpEnergyTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('mpHUDBarsTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
 
 pc.script.create('GameManager', function (context) {
 
@@ -193,57 +225,6 @@ pc.script.create('GameManager', function (context) {
         Missle: 1                               // 3 missles
     });
 
-
-/*
-    window.GameManager =
-    {
-        LevelIds: Object.freeze([
-            { name: window.GameManager.Levels.SmallSpace, id: "353946" },
-            { name: window.GameManager.Levels.RedSpace, id: "352304" },
-            { name: window.GameManager.Levels.DoubleSpace, id: "352639" }
-        ]),
-
-        GameMode: Object.freeze({None: 0, SinglePlayer: 1, MultiPlayer: 2}),
-        MaxPlayers: 2,
-        
-        RenderTechnique: Object.freeze(
-        {
-            PlainMapping: 0,                        // plain texture mapping
-            NormalMapping: 1,                       // normal mapping
-            ViewMapping: 2                          // view aligned mapping (used for blaster)
-        }),
-
-        AnimSpriteType: Object.freeze(
-        {
-            Blaster: 0,                             // blaster hit
-            Missle: 1,                              // missle explode
-            Ship: 2,                                // ship explode
-            Spawn: 3,                               // ship/object spawn
-            Shield: 4                               // ship shield
-        }),
-
-        ProjectileType: Object.freeze(
-        {
-            Blaster: 0,                             // blaster projectile
-            Missle: 1                               // missle projectile
-        }),
-    
-        ParticleSystemType: Object.freeze(
-        {
-            ShipExplode: 0,                         // ship explode
-            ShipTrail: 1,                           // ship trail
-            MissleExplode: 2,                       // missle explode
-            MissleTrail: 3,                         // missle trail
-            BlasterExplode: 4                       // blaster explode
-        }),
-
-        PowerupType: Object.freeze(
-        {
-            Energy: 0,                              // 50% energy
-            Missle: 1                               // 3 missles
-        })
-    };
-*/
     
     GameManager.prototype = {
 
@@ -292,15 +273,36 @@ pc.script.create('GameManager', function (context) {
 
             this.CreateShaders(gd);
             this.CreateUniforms(gd);
+        },
+        
+        
+        UnloadContent: function() {
+        },
 
-            var assets =
-            [
-                    context.assets.getAssetById(this.crosshairTexture),
-                    context.assets.getAssetById(this.scoreTexture),
-                    context.assets.getAssetById(this.missileTexture),
-                    context.assets.getAssetById(this.energyTexture),
-                    context.assets.getAssetById(this.hudBarsTexture)
-            ];
+
+        LoadAssets: function () {
+
+            var assets = [];
+
+            if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
+                assets =
+                [
+                    context.assets.getAssetById(this.spCrosshairTexture),
+                    context.assets.getAssetById(this.spScoreTexture),
+                    context.assets.getAssetById(this.spMissileTexture),
+                    context.assets.getAssetById(this.spEenergyTexture),
+                    context.assets.getAssetById(this.spHUDBarsTexture),
+                ];
+            } else {
+                assets =
+                [
+                    context.assets.getAssetById(this.mpCrosshairTexture),
+                    context.assets.getAssetById(this.mpScoreTexture),
+                    context.assets.getAssetById(this.mpMissileTexture),
+                    context.assets.getAssetById(this.mpEenergyTexture),
+                    context.assets.getAssetById(this.mpHUDBarsTexture),
+                ];
+            }
 
             context.assets.load(assets).then(function (resources) {
                 this.realCrosshairTexture = resources[0];
@@ -309,10 +311,6 @@ pc.script.create('GameManager', function (context) {
                 this.realEnergyTexture = resources[3];
                 this.realHUDBarsTexture = resources[4];
             }.bind(this));
-        },
-        
-        
-        UnloadContent: function() {
         },
 
 
@@ -335,7 +333,7 @@ pc.script.create('GameManager', function (context) {
                 }
 
                 this.currentLevel = window.GameManager.LevelIds[idx].name;
-                this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
+                //this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
             }
         },
 
@@ -359,6 +357,8 @@ pc.script.create('GameManager', function (context) {
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx].name;
                     this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
+
+                    this.LoadAssets();
                 }
             }
         },
@@ -880,7 +880,7 @@ pc.script.create('GameManager', function (context) {
             var r = new pc.Vec4();
 
             // draw crosshair if requested
-            if (crosshair && this.realCrosshairTexture) {
+            if (crosshair && this.realspCrosshairTexture) {
                 r.x = rect.x + (rect.z - this.realCrosshairTexture.width) / 2.0;
                 r.y = rect.y + (rect.w - this.realCrosshairTexture.height) / 2.0;
                 r.z = this.realCrosshairTexture.width;
