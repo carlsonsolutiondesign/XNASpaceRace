@@ -35,6 +35,7 @@ pc.script.create('GameManager', function (context) {
         this.gameMode = null;
         this.currentLevel = null;
 
+        this.players = [];
         this.shipFile = ["", ""];
         this.invertYAxis = 0;
 
@@ -225,6 +226,7 @@ pc.script.create('GameManager', function (context) {
             this.currentLevel = 0; //window.GameManager.Levels.RedSpace;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
+            this.players = [new PlayerShip(), new PlayerShip()];
             this.counter = 0;
         },
         
