@@ -7,6 +7,7 @@ pc.script.create('GameScreen', function (context) {
         
         this.screenManager = null;
         this.gameManager = null;
+        this.soundManager = null;
     };
 
 
@@ -28,7 +29,25 @@ pc.script.create('GameScreen', function (context) {
         },
         
         
-        ProcessInput: function(dt, inputManager) {
+        ProcessInput: function (dt, inputManager) {
+
+            if (!inputManager)
+                return;
+
+            this.gameManager.ProcessInput(dt, inputManager);
+
+            for (var i = 0; i < this.gameManager.gameMode; i++) {
+                if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasBackButtonPressed(i)) {
+
+                    var player = this.gameManager.GetPlayer(i);
+                    if (player) {
+                        player.score = -1;
+                    }
+
+                    this.screenManager.SetNextScreen(ScreenManager.ScreenType.EndScreen);
+                    this.soundManager.Play(SoundManager.Sound.MenuCancel);
+                }
+            }
         },
         
         

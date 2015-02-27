@@ -17,6 +17,36 @@
 // Matrices (Mat4)         - http://developer.playcanvas.com/en/engine/api/stable/symbols/pc.Mat4.html
 // Vectors (Vec3)          - http://developer.playcanvas.com/en/engine/api/stable/symbols/pc.Vec3.html
 //------------------------------------------------------------------------------------------------------------------------
+pc.script.attribute('crosshairTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('scoreTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('missileTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('energyTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
+pc.script.attribute('hudBarsTexture', 'asset', [],
+{
+    type: 'texture',
+    max: 1
+});
+
 pc.script.create('GameManager', function (context) {
 
     // Creates a new GameManager instance
@@ -38,6 +68,12 @@ pc.script.create('GameManager', function (context) {
         this.players = [];
         this.shipFile = ["", ""];
         this.invertYAxis = 0;
+
+        this.realCrosshairTexture = null;
+        this.realScoreTexture = null;
+        this.realMissileTexture = null;
+        this.realEnergyTexture = null;
+        this.realHUDBarsTexture = null;
 
         this.animationTimer = 0;
 
@@ -256,6 +292,23 @@ pc.script.create('GameManager', function (context) {
 
             this.CreateShaders(gd);
             this.CreateUniforms(gd);
+
+            var assets =
+            [
+                    context.assets.getAssetById(this.crosshairTexture),
+                    context.assets.getAssetById(this.scoreTexture),
+                    context.assets.getAssetById(this.missileTexture),
+                    context.assets.getAssetById(this.energyTexture),
+                    context.assets.getAssetById(this.hudBarsTexture)
+            ];
+
+            context.assets.load(assets).then(function (resources) {
+                this.realCrosshairTexture = resources[0];
+                this.realScoreTexture = resources[1];
+                this.realMissleTexture = resources[2];
+                this.realEnergyTexture = resources[3];
+                this.realHUDBarsTexture = resources[4];
+            }.bind(this));
         },
         
         
@@ -808,11 +861,90 @@ pc.script.create('GameManager', function (context) {
 
         Draw3D: function (gd) {
 
+            if (!gd)
+                return;
+
+            gd.clear({
+                color: [0.0, 0.0, 0.0, 1.0],
+                depth: 1.0,
+                flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH
+            });
+        },
+
+
+        DrawHUD: function (gd, rect, bars, barsLeft, barsWidth, crosshair) {
+
+            if (!gd)
+                return;
+
+            var r = new pc.Vec4();
+
+            // draw crosshair if requested
+            if (crosshair && this.realCrosshairTexture) {
+                r.x = rect.x + (rect.z - this.realCrosshairTexture.width) / 2.0;
+                r.y = rect.y + (rect.w - this.realCrosshairTexture.height) / 2.0;
+                r.z = this.realCrosshairTexture.width;
+                r.w = this.realCrosshairTexture.height;
+
+                this.screenManager.DrawTexture(gd, this.realCrosshairTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+            }
+
+            // draw the score HUD
+            if (this.realScoreTexture) {
+                r.x = rect.x + (rect.z - this.realScoreTexture.width) / 2.0;
+                r.y = rect.y;
+                r.z = this.realScoreTexture.width;
+                r.w = this.realScoreTexture.height;
+
+                this.screenManager.DrawTexture(gd, this.realScoreTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+            }
+
+            // draw the missile HUD
+            if (this.realMissileTexture) {
+                r.x = rect.x + rect.z - this.realMissileTexture.width;
+                r.y = rect.y + rect.w - this.realMissleTexture.height;
+                r.z = this.realMissileTexture.width;
+                r.w = this.realMissleTexture.height;
+
+                this.screenManager.DrawTexture(gd, this.realMissleTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+            }
+
+            // draw the energy HUB
+            if (this.realEnergyTexture) {
+                r.x = rect.x;
+                r.y = rect.y + rect.w - this.realEngergyTexture.height;
+                r.z = this.realEnergyTexture.width;
+                r.w = this.realEnergyTexture.height;
+
+                this.screenManager.DrawTexture(gd, this.realEnergyTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+            }
+
+            
+            // draw energy bar
+            if (this.realHUDBars) {
+
+                var s = new pc.Vec4();
+
+            }
         },
 
 
         Draw2D: function (gd) {
 
+            if (!gd)
+                return;
+
+            var rect = new pc.Vec4();
+            rect.z = gd.width;
+            rect.w = gd.height;
+
+            if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
+                if (this.players[0].IsAlive()) {
+                    this.DrawHUD(gd, rect, this.players[0].Bars, 70, 120);
+                }
+            } else {
+
+            }
         },
 
 

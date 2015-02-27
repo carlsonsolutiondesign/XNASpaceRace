@@ -38,6 +38,15 @@ pc.script.create('PlayerShip', function (context) {
 
         // Called every frame, dt is time in seconds since last update
         update: function (dt) {
+        },
+
+
+        IsAlive: function () {
+            if (this.deadTime === 0.0) {
+                return true;
+            }
+
+            return false;
         }
     };
 
