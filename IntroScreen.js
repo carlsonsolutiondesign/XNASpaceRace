@@ -80,7 +80,7 @@ pc.script.create('IntroScreen', function (context) {
         
         this.NumberOfMenuItems = 4;
 
-        this.cursorRotationVelocity = 0.0; //40.0;
+        this.cursorRotationVelocity = 40.0; //40.0;
     };
 
 

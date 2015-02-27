@@ -779,6 +779,21 @@ pc.script.create('GameManager', function (context) {
         },
 
 
+        Update: function (dt) {
+
+        },
+
+
+        Draw3D: function (gd) {
+
+        },
+
+
+        Draw2D: function (gd) {
+
+        },
+
+
         SetLighting: function (gd, lighting) {
 
             var lights = lighting.lights;

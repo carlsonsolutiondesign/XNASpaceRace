@@ -32,15 +32,32 @@ pc.script.create('GameScreen', function (context) {
         },
         
         
-        Update: function(dt) {
+        Update: function (dt) {
+            gameManager.Update(dt);
+
+            for (var i = 0; i < this.gameManager.gameMode; i++) {
+                if (this.gameManager.GetPlayer(i).Score == GameOptions.MaxPoints) {
+                    this.screenManager.SetNextScreen(ScreenManager.ScreneType.EndScreen, GameOptions.FadeColor, GameOptions.FadeTime);
+                }
+            }
         },
         
         
-        Draw3D: function(gd) {
+        Draw3D: function (gd) {
+
+            if (!gd)
+                return;
+
+            this.gameManager.Draw3D(gd);
         },
         
         
-        Draw2D: function(gd, fontManager) {
+        Draw2D: function (gd, fontManager) {
+
+            if (!gd)
+                return;
+
+            this.gameManager.Draw2D(gd);
         }
     };
 

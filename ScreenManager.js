@@ -204,13 +204,11 @@ pc.script.create('ScreenManager', function (context) {
 
             this.inputManager.SyncInput(dt);
 
-            if (this.currentScreen != this.root.script.GameScreen) {
-                if (this.currentScreen && !this.nextScreen)
-                    this.currentScreen.ProcessInput(dt, this.inputManager);
+            if (this.currentScreen && !this.nextScreen)
+                this.currentScreen.ProcessInput(dt, this.inputManager);
 
-                if (this.inputManager.WasKeyPressed(0, pc.KEY_F3) || this.inputManager.WasKeyPressed(1, pc.KEY_F3))
-                    this.bootManager.ToggleFullScreen();
-            }
+            if (this.inputManager.WasKeyPressed(0, pc.KEY_F3) || this.inputManager.WasKeyPressed(1, pc.KEY_F3))
+                this.bootManager.ToggleFullScreen();
         },
         
         
@@ -524,7 +522,8 @@ pc.script.create('ScreenManager', function (context) {
 
                     context.root.addChild(self.currentLevelPack.hierarchy);
 
-                    pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+                    //pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+                    pc.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
                 });
             }
         },
