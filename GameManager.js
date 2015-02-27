@@ -112,9 +112,9 @@ pc.script.create('GameManager', function (context) {
     };
 
     window.GameManager.LevelIds = Object.freeze([
-        { name: window.GameManager.Levels.SmallSpace, id: "353946" },
-        { name: window.GameManager.Levels.RedSpace, id: "352304" },
-        { name: window.GameManager.Levels.DoubleSpace, id: "352639" }
+        { name: window.GameManager.Levels.SmallSpace, id: 353946 },
+        { name: window.GameManager.Levels.RedSpace, id: 352304 },
+        { name: window.GameManager.Levels.DoubleSpace, id: 352639 }
     ]);
 
     window.GameManager.GameMode = Object.freeze({None: 0, SinglePlayer: 1, MultiPlayer: 2});
