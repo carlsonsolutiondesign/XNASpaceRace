@@ -226,23 +226,31 @@ pc.script.create('GameManager', function (context) {
             this.currentLevel = 0; //window.GameManager.Levels.RedSpace;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
-            context.systems.script.addComponent(this.entity,
-            {
-                scripts:
-                [
-                    { url: 'PlayerShip.js', name: 'player1' },
-                    { url: 'PlayerShip.js', name: 'player2' }
-                ]
-            });
-
-            var p1 = this.root.findByName('player1');
-            var p2 = this.root.findByName('player2');
-            this.players = [p1, p2];
+            this.players = [this.AddPlayer('player1'), this.AddPlayer('player2')];
 
             this.counter = 0;
         },
         
         
+        AddPlayer: function (name) {
+
+            var player = new pc.Entity(context);
+            player.setName(name);
+
+            context.systems.script.addComponent(player,
+            {
+                scripts:
+                [
+                    { url: 'PlayerShip.js' }
+                ]
+            });
+
+            this.root.addChild(player);
+
+            return player;
+        },
+
+
         LoadContent: function () {
             var gd = context.graphicsDevice;
 
