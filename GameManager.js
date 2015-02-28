@@ -290,7 +290,7 @@ pc.script.create('GameManager', function (context) {
                     context.assets.getAssetById(this.spCrosshairTexture),
                     context.assets.getAssetById(this.spScoreTexture),
                     context.assets.getAssetById(this.spMissileTexture),
-                    context.assets.getAssetById(this.spEenergyTexture),
+                    context.assets.getAssetById(this.spEnergyTexture),
                     context.assets.getAssetById(this.spHUDBarsTexture),
                 ];
             } else {
@@ -299,7 +299,7 @@ pc.script.create('GameManager', function (context) {
                     context.assets.getAssetById(this.mpCrosshairTexture),
                     context.assets.getAssetById(this.mpScoreTexture),
                     context.assets.getAssetById(this.mpMissileTexture),
-                    context.assets.getAssetById(this.mpEenergyTexture),
+                    context.assets.getAssetById(this.mpEnergyTexture),
                     context.assets.getAssetById(this.mpHUDBarsTexture),
                 ];
             }
