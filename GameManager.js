@@ -920,7 +920,7 @@ pc.script.create('GameManager', function (context) {
             // draw the energy HUB
             if (this.realEnergyTexture) {
                 r.x = rect.x;
-                r.y = rect.y + rect.w - this.realEngergyTexture.height;
+                r.y = rect.y + rect.w - this.realEnergyTexture.height;
                 r.z = this.realEnergyTexture.width;
                 r.w = this.realEnergyTexture.height;
 
