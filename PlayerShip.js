@@ -43,11 +43,14 @@ pc.script.create('PlayerShip', function (context) {
 
 
         IsAlive: function () {
-            if (this.deadTime === 0.0) {
-                return true;
-            }
+            //if (this.deadTime === 0.0) {
+            //    return true;
+            //}
+            //
+            //return false;
 
-            return false;
+            // temporary for testing purposes
+            return true;
         },
 
 
