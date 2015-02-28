@@ -307,7 +307,7 @@ pc.script.create('GameManager', function (context) {
             context.assets.load(assets).then(function (resources) {
                 this.realCrosshairTexture = resources[0];
                 this.realScoreTexture = resources[1];
-                this.realMissleTexture = resources[2];
+                this.realMissileTexture = resources[2];
                 this.realEnergyTexture = resources[3];
                 this.realHUDBarsTexture = resources[4];
             }.bind(this));
@@ -888,7 +888,7 @@ pc.script.create('GameManager', function (context) {
             var r = new pc.Vec4();
 
             // draw crosshair if requested
-            if (crosshair && this.realspCrosshairTexture) {
+            if (crosshair && this.realCrosshairTexture) {
                 r.x = rect.x + (rect.z - this.realCrosshairTexture.width) / 2.0;
                 r.y = rect.y + (rect.w - this.realCrosshairTexture.height) / 2.0;
                 r.z = this.realCrosshairTexture.width;
@@ -910,11 +910,11 @@ pc.script.create('GameManager', function (context) {
             // draw the missile HUD
             if (this.realMissileTexture) {
                 r.x = rect.x + rect.z - this.realMissileTexture.width;
-                r.y = rect.y + rect.w - this.realMissleTexture.height;
+                r.y = rect.y + rect.w - this.realMissileTexture.height;
                 r.z = this.realMissileTexture.width;
-                r.w = this.realMissleTexture.height;
+                r.w = this.realMissileTexture.height;
 
-                this.screenManager.DrawTexture(gd, this.realMissleTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+                this.screenManager.DrawTexture(gd, this.realMissileTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
             }
 
             // draw the energy HUB
@@ -927,12 +927,29 @@ pc.script.create('GameManager', function (context) {
                 this.screenManager.DrawTexture(gd, this.realEnergyTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
             }
 
-            
-            // draw energy bar
-            if (this.realHUDBars) {
+            // draw bars
+            if (this.realHUDBarsTexture) {
 
-                var s = new pc.Vec4();
+                var red = new pc.Vec4(1.0, 0.0, 0.0, 1.0);
+                var green = new pc.Vec4(0.0, 1.0, 0.0, 1.0);
+                var blue = new pc.Vec4(0.0, 0.0, 1.0, 1.0);
 
+                var s = new pc.Vec4(0, 0, this.realHUDBarsTexture.width, this.realHUDBarsTexture.height);
+
+                // draw energy bar
+                s.z = barsLeft + (barsWidth * bars.x);
+                r.z = barsLeft + (barsWidth * bars.x);
+                this.screenManager.DrawTexture(gd, this.realHUDBarsTexture, r, red, ScreenManager.BlendMode.AdditiveBlending);
+
+                // draw the shield bar
+                s.z = barsLeft + (barsWidth * bars.y);
+                r.z = barsLeft + (barsWidth * bars.y);
+                this.screenManager.DrawTexture(gd, this.realHUDBarsTexture, r, green, ScreenManager.BlendMode.AdditiveBlending);
+
+                // draw the boost bar
+                s.z = barsLeft + (barsWidth * bars.z);
+                r.z = barsLeft + (barsWidth * bars.z);
+                this.screenManager.DrawTexture(gd, this.realHUDBarsTexture, r, blue, ScreenManager.BlendMode.AdditiveBlending);
             }
         },
 
