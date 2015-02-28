@@ -946,8 +946,8 @@ pc.script.create('GameManager', function (context) {
             rect.w = gd.height;
 
             if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
-                if (this.players[0].IsAlive()) {
-                    this.DrawHUD(gd, rect, this.players[0].Bars, 70, 120);
+                if (this.players[0].script.PlayerShip.IsAlive()) {
+                    this.DrawHUD(gd, rect, this.players[0].script.PlayerShip.Bars(), 70, 120, !this.players[0].script.PlayerShip.camera3DPerson);
                 }
             } else {
 

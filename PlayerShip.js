@@ -25,6 +25,7 @@ pc.script.create('PlayerShip', function (context) {
         this.playerIndex = 0;                   // the player index for this ship
         this.score = 0;                         // the player current score
 
+        this.camera3DPerson = true;
         this.shipModel = null;                  // player ship model
     };
 
@@ -47,6 +48,11 @@ pc.script.create('PlayerShip', function (context) {
             }
 
             return false;
+        },
+
+
+        Bars: function () {
+            return new pc.Vec3(this.energy, this.shield, this.boost);
         }
     };
 
