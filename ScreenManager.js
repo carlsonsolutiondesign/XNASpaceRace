@@ -247,9 +247,6 @@ pc.script.create('ScreenManager', function (context) {
             
             var gd = context.graphicsDevice;
 
-            //if (!gd || this.currentScreen === this.root.script.GameScreen)
-            //    return;
-
             gd.setRenderTarget(null);
             gd.updateBegin();
 
@@ -447,7 +444,43 @@ pc.script.create('ScreenManager', function (context) {
             gd.setBlending(prevBlending);
         },
         
-        
+
+        DrawClippedTexture: function (gd, texture, rect, clipRect, color, blendMode, rotation) {
+
+            if (!gd || !texture)
+                return;
+
+            if (typeof (rotation) === 'undefined') rotation = 0.0;
+
+            var prevBlending = gd.getBlending();
+            var prevDepthWrite = gd.getDepthWrite();
+            var prevDepthTest = gd.getDepthTest();
+
+            gd.setDepthWrite(false);
+            gd.setDepthTest(false);
+
+            switch (blendMode) {
+                case window.ScreenManager.BlendMode.None:
+                    this.SetNoBlending(gd);
+                    break;
+
+                case window.ScreenManager.BlendMode.AdditiveBlending:
+                    this.SetAdditiveBlending(gd);
+                    break;
+
+                case window.ScreenManager.BlendMode.AlphaBlending:
+                    this.SetAlphaBlending(gd);
+                    break;
+            }
+
+            this.spriteManager.RenderClipSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, rect, clipRect, color, rotation);
+
+            gd.setDepthTest(prevDepthTest);
+            gd.setDepthWrite(prevDepthWrite);
+            gd.setBlending(prevBlending);
+        },
+
+
         DrawTexture: function(gd, texture, rect, color, blendMode, rotation) {
 
             if(!gd || !texture)
@@ -476,7 +509,7 @@ pc.script.create('ScreenManager', function (context) {
                     break;
             }
             
-            this.spriteManager.RenderSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, color, rect.x, rect.y, rect.z, rect.w, rotation);
+            this.spriteManager.RenderSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, rect, color, rotation);
             
             gd.setDepthTest(prevDepthTest);
             gd.setDepthWrite(prevDepthWrite);

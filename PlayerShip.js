@@ -27,6 +27,9 @@ pc.script.create('PlayerShip', function (context) {
 
         this.camera3DPerson = true;
         this.shipModel = null;                  // player ship model
+
+        this.elapsedTime = 0.0;
+        this.lastUpdate = 0.0;
     };
 
 
@@ -39,6 +42,17 @@ pc.script.create('PlayerShip', function (context) {
 
         // Called every frame, dt is time in seconds since last update
         update: function (dt) {
+            this.elapsedTime += dt;
+
+            // temporary for testing purposes
+            var t = Math.floor(this.elapsedTime);
+            if( t != this.lastUpdate && (t % 3) === 0.0) {
+                this.energy = Math.random();
+                this.shield = Math.random();
+                this.boost = Math.random();
+
+                this.lastUpdate = t;
+            }
         },
 
 
