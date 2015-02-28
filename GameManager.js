@@ -854,6 +854,13 @@ pc.script.create('GameManager', function (context) {
         },
 
 
+        ProcessInput: function (dt, inputManager) {
+
+            if (!inputManager)
+                return;
+        },
+
+
         Update: function (dt) {
 
         },
