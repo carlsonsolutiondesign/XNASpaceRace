@@ -884,6 +884,7 @@ pc.script.create('GameManager', function (context) {
             if (!gd)
                 return;
 
+            var white = new pc.Vec4().copy(pc.Vec4.ONE);
             var r = new pc.Vec4();
 
             // draw crosshair if requested
