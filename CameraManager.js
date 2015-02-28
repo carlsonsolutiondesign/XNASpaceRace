@@ -105,10 +105,35 @@ pc.script.create('CameraManager', function (context) {
             if (this.target) {
                 var ex = context.gamepads.getAxis(pc.input.PAD_1, pc.PAD_R_STICK_X);
                 var ey = context.gamepads.getAxis(pc.input.PAD_1, pc.PAD_R_STICK_Y);
+                if (context.keyboard.isPressed(pc.KEY_K)) {
+                    ey -= 1;
+                } else if (context.keyboard.isPressed(pc.KEY_J)) {
+                    ey += 1;
+                }
+                if (context.keyboard.isPressed(pc.KEY_Y)) {
+		    ex -= 1;
+                    ey -= 1;
+                } else if (context.keyboard.isPressed(pc.KEY_U)) {
+		    ex += 1;
+                    ey -= 1;
+                }
+                if (context.keyboard.isPressed(pc.KEY_B)) {
+		    ex -= 1;
+                    ey += 1;
+                } else if (context.keyboard.isPressed(pc.KEY_N)) {
+		    ex += 1;
+                    ey += 1;
+                }
+
 
                 var ez = 0;
                 ez -= context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_R_SHOULDER_2);
                 ez += context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_L_SHOULDER_2);
+                if (context.keyboard.isPressed(pc.KEY_L)) {
+                    ez -= 1;
+                } else if (context.keyboard.isPressed(pc.KEY_H)) {
+                    ez += 1;
+                }
 
                 var dA = this.itsAngularVelocity * dt;
                 this.target.getParent().rotateLocal(-(dA * ey), -(dA * ex), dA * ez);
@@ -131,6 +156,12 @@ pc.script.create('CameraManager', function (context) {
                 var dy = 0;
                 dy += context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_L_STICK_BUTTON);
                 dy -= context.gamepads.isPressed(pc.input.PAD_1, pc.PAD_R_STICK_BUTTON);
+                if (context.keyboard.isPressed(pc.KEY_DOWN)) {
+                    dy -= 1;
+                } else if (context.keyboard.isPressed(pc.KEY_UP)) {
+                    dy += 1;
+                }
+
 
                 this.target.getParent().translateLocal(this.itsLinearVelocity * dt * dx, this.itsRateOfAscension * dy, this.itsLinearVelocity * dt * dz);
             }
