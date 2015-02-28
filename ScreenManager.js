@@ -247,8 +247,8 @@ pc.script.create('ScreenManager', function (context) {
             
             var gd = context.graphicsDevice;
 
-            if (!gd || this.currentScreen === this.root.script.GameScreen)
-                return;
+            //if (!gd || this.currentScreen === this.root.script.GameScreen)
+            //    return;
 
             gd.setRenderTarget(null);
             gd.updateBegin();
