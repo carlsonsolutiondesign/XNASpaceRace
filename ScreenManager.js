@@ -290,31 +290,40 @@ pc.script.create('ScreenManager', function (context) {
                 var size = this.fadeTime * 0.5;
                 this.fadeColor.w = 1.25 * (1.0 - Math.abs(this.fade - size) / size);
 
-                // set alpha blend and no depth test or write
-                var prevBlending = gd.getBlending();
-                var prevDepthWrite = gd.getDepthWrite();
-                var prevDepthTest  = gd.getDepthTest();
-            
-                gd.setDepthWrite(false);
-                gd.setDepthTest(false);
-                this.SetAlphaBlending(gd);
-            
-                // draw transition fade color
-                //gd.updateBegin();
-                this.blurManager.RenderScreenQuad(gd, BlurManager.BlurTechnique.Color, null, this.fadeColor);
-                //gd.updateEnd();
-
-                // restore render states
-                gd.setDepthTest(prevDepthTest);
-                gd.setDepthWrite(prevDepthWrite);
-                gd.setBlending(prevBlending);
+                this.FadeScene(gd, this.fadeColor);
             }
 
             gd.updateEnd();
         },
         
         
-        DrawBackground: function(gd) {
+        FadeScene: function (gd, color) {
+
+            if (!gd)
+                return;
+
+            // set alpha blend and no depth test or write
+            var prevBlending = gd.getBlending();
+            var prevDepthWrite = gd.getDepthWrite();
+            var prevDepthTest = gd.getDepthTest();
+
+            gd.setDepthWrite(false);
+            gd.setDepthTest(false);
+            this.SetAlphaBlending(gd);
+
+            // draw transition fade color
+            //gd.updateBegin();
+            this.blurManager.RenderScreenQuad(gd, BlurManager.BlurTechnique.Color, null, color);
+            //gd.updateEnd();
+
+            // restore render states
+            gd.setDepthTest(prevDepthTest);
+            gd.setDepthWrite(prevDepthWrite);
+            gd.setBlending(prevBlending);
+        },
+
+
+        DrawBackground: function (gd) {
             
             const animationTime = 3.0;
             const animationLength = 0.8;

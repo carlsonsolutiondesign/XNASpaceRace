@@ -107,7 +107,7 @@ pc.script.create('GameManager', function (context) {
         this.realEnergyTexture = null;
         this.realHUDBarsTexture = null;
 
-        this.animationTimer = 0;
+        this.elapsedTime = 0;
 
         this.plainShader = null;
         this.previewShader = null;
@@ -852,12 +852,6 @@ pc.script.create('GameManager', function (context) {
         },
         
         
-        // Called every frame, dt is time in seconds since last update
-        update: function (dt) {
-            this.animationTimer += dt;
-        },
-
-
         ProcessInput: function (dt, inputManager) {
 
             if (!inputManager)
@@ -867,6 +861,13 @@ pc.script.create('GameManager', function (context) {
 
         Update: function (dt) {
 
+            this.elapsedTime += dt;
+
+            this.players[0].script.PlayerShip.Update(dt);
+
+            if (this.elapsedTime > 8.0) {
+                this.players[0].script.PlayerShip.simulate = true;
+            }
         },
 
 
@@ -966,7 +967,16 @@ pc.script.create('GameManager', function (context) {
 
             if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
                 if (this.players[0].script.PlayerShip.IsAlive()) {
+                    // draw HUB
                     this.DrawHUD(gd, rect, this.players[0].script.PlayerShip.Bars(), 70, 120, !this.players[0].script.PlayerShip.camera3DPerson);
+
+                    // draw missile count
+                }
+
+                // draw damage indicator
+                var color = this.players[0].script.PlayerShip.DamageColor();
+                if (color.a > 0) {
+                    this.screenManager.FadeScene(gd, color);
                 }
             } else {
 
