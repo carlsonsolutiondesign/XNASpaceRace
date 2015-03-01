@@ -72,7 +72,7 @@ pc.script.create('ScreenManager', function (context) {
     {
         ScreenType: Object.freeze({IntroScreen: 0, HelpScreen: 1, PlayerScreen: 2, LevelScreen: 3, GameScreen: 4, EndScreen: 5}),
         
-        Menu: Object.freeze({ id: "352638" }),
+        Menu: Object.freeze({ id: 352638 }),
 
         BlendMode: Object.freeze({ None: 0, AdditiveBlending: 1, AlphaBlending: 2 })
     };
@@ -243,7 +243,7 @@ pc.script.create('ScreenManager', function (context) {
         },
         
 
-        Draw: function(dt) {
+        Draw3D: function(dt) {
             
             var gd = context.graphicsDevice;
 
@@ -277,15 +277,29 @@ pc.script.create('ScreenManager', function (context) {
                     //gd.updateBegin();
                     //this.DrawRenderTargetTexture(gd, this.colorRT, 1.0, window.ScreenManager.BlendMode.None);
                     //this.DrawRenderTargetTexture(gd, this.glowRT2, 0.5, window.ScreenManager.BlendMode.AdditiveBlending);
-                    this.currentScreen.Draw2D(gd, this.fontManager);
+
+                    //this.currentScreen.Draw2D(gd, this.fontManager);
+
                     //gd.updateEnd();
                 }
             }
 
+            gd.updateEnd();
+        },
+        
+        
+        Draw2D: function (dt) {
+
+            var gd = context.graphicsDevice;
+
+            gd.updateBegin();
+
+            if (this.currentScreen) {
+                this.currentScreen.Draw2D(gd, this.fontManager);
+            }
 
             // fade if in a transition
-            if (this.fade > 0)
-            {
+            if (this.fade > 0) {
                 // compute transtition fade intensity
                 var size = this.fadeTime * 0.5;
                 this.fadeColor.w = 1.25 * (1.0 - Math.abs(this.fade - size) / size);
@@ -295,8 +309,8 @@ pc.script.create('ScreenManager', function (context) {
 
             gd.updateEnd();
         },
-        
-        
+
+
         FadeScene: function (gd, color) {
 
             if (!gd)
@@ -564,8 +578,32 @@ pc.script.create('ScreenManager', function (context) {
 
                     context.root.addChild(self.currentLevelPack.hierarchy);
 
-                    //pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
-                    pc.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+                    pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+
+                    // make sure the GameMenu node is the last in the tree
+                    /*
+                    var gameMenuNode = null;
+                    var children = context.root.getChildren();
+                    for (var i = 0; i < children.length; i++) {
+                        if (children[i].name === 'GameMenu') {
+
+                            // found the name - remove and readd if not already the last node
+                            if (i < children.length - 1) {
+                                var menu = children[i];
+                                context.root.removeChild(menu);
+                                context.root.addChild(menu);
+
+                                console.log('moving menu to last node in root');
+                                return;
+                            }
+
+                            console.log('menu already last node in root');
+                            return;
+                        }
+                    }
+
+                    console.log('menu not found in root');
+                    */
                 });
             }
         },
