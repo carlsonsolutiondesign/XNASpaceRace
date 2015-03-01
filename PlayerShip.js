@@ -27,8 +27,9 @@ pc.script.create('PlayerShip', function (context) {
         this.shipModel = null;                                  // player ship model
 
         this.elapsedTime = 0.0;
-        this.lastUpdate = 0.0;
         this.simulate = false;
+        this.nextSimulationDelta = 3;
+        this.lastSimulation = 0;
     };
 
 
@@ -47,11 +48,15 @@ pc.script.create('PlayerShip', function (context) {
 
             if (!this.IsAlive()) {
 
+                console.log('player is not alive.');
+
                 // when deadTime reaches 0 the player respawns
                 this.deadTime = Math.max(0, this.deadTime - dt);
 
                 // if player dead time expires, then respawn
                 if (this.IsAlive()) {
+
+                    console.log('respawning player.');
 
                     // reset energy, shield and boost
                     this.energy = 1.0;
@@ -73,18 +78,23 @@ pc.script.create('PlayerShip', function (context) {
 
             // temporary for testing purposes
             var t = Math.floor(this.elapsedTime);
-            if (t != this.lastUpdate && (t % 3) === 0.0) {
-                this.AddEnergy(-0.05);
+            if (t != this.lastSimulation && (t % this.nextSimulationDelta) === 0.0) {
+                var e = Math.random();
+                var s = Math.floor(e * 10) % 2;
+                var i = (s === 0 ? -1 : 1);
+
+                this.AddEnergy(e * i);
                 this.shield = Math.random();
                 this.boost = Math.random();
 
-                this.lastUpdate = t;
+                this.lastSimulation = t;
+                this.nextSimulationDelta = Math.max(1, Math.floor(Math.random() * 10));
             }
         },
 
 
         IsAlive: function () {
-            if (this.deadTime === 0.0) {
+            if (this.deadTime <= 0.0) {
                 return true;
             }
             
