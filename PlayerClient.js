@@ -42,5 +42,7 @@ pc.script.create('PlayerClient', function(context) {
 	PlayerClient.socket.on('serverupdate', Player.prototype.serverupdate);
 	PlayerClient.socket.on('servercapability', PlayerClient.prototype.servercapability);
 	PlayerClient.socket.emit('clientrejoin', location.href);
+	
+	return PlayerClient;
 });
 
