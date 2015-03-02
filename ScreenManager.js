@@ -579,31 +579,6 @@ pc.script.create('ScreenManager', function (context) {
                     context.root.addChild(self.currentLevelPack.hierarchy);
 
                     pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
-
-                    // make sure the GameMenu node is the last in the tree
-                    /*
-                    var gameMenuNode = null;
-                    var children = context.root.getChildren();
-                    for (var i = 0; i < children.length; i++) {
-                        if (children[i].name === 'GameMenu') {
-
-                            // found the name - remove and readd if not already the last node
-                            if (i < children.length - 1) {
-                                var menu = children[i];
-                                context.root.removeChild(menu);
-                                context.root.addChild(menu);
-
-                                console.log('moving menu to last node in root');
-                                return;
-                            }
-
-                            console.log('menu already last node in root');
-                            return;
-                        }
-                    }
-
-                    console.log('menu not found in root');
-                    */
                 });
             }
         },

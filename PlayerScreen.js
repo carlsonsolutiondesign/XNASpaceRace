@@ -109,8 +109,6 @@ pc.script.create('PlayerScreen', function (context) {
         this.realInvertYCheckTexture = null;
         this.realInvertYUncheckTexture = null;
 
-        this.ships = ["ship1", "ship2"];
-
         this.selection = [0, 1];
         this.confirmed = [false, false];
         
@@ -343,9 +341,9 @@ pc.script.create('PlayerScreen', function (context) {
             // if both ships confirmed, go to game screen
             if (this.confirmed[0] && this.confirmed[1]) {
                 if (this.gameManager.GameMode == GameManager.GameMode.SinglePlayer)
-                    this.gameManager.SetShips(this.ships[this.selection[0]], null, this.invertY);
+                    this.gameManager.SetShips(this.shipModels[this.selection[0]], null, this.invertY);
                 else
-                    this.gameManager.SetShips(this.ships[this.selection[0]], this.ships[this.selection[1]], this.invertY);
+                    this.gameManager.SetShips(this.shipModels[this.selection[0]], this.shipModels[this.selection[1]], this.invertY);
                     
                 this.screenManager.SetNextScreen(ScreenManager.ScreenType.LevelScreen);
             }

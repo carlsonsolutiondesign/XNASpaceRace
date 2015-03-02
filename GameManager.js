@@ -98,7 +98,7 @@ pc.script.create('GameManager', function (context) {
         this.currentLevel = null;
 
         this.players = [];
-        this.shipFile = ["", ""];
+        this.shipIds = [];
         this.invertYAxis = 0;
 
         this.realCrosshairTexture = null;
@@ -236,9 +236,9 @@ pc.script.create('GameManager', function (context) {
             this.screenManager = this.root.script.ScreenManager;
             this.animSpriteManager = this.root.script.AnimSpriteManager;
             this.projectileManager = this.root.script.ProjectileManager;
-            this.particleManager = this.root.ParticleManager;
-            this.powerupManager = this.root.PowerupManager;
-            this.soundManager = this.root.SoundManager;
+            this.particleManager = this.root.script.ParticleManager;
+            this.powerupManager = this.root.script.PowerupManager;
+            this.soundManager = this.root.script.SoundManager;
 
             this.currentLevel = 0; //window.GameManager.Levels.RedSpace;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
@@ -265,6 +265,35 @@ pc.script.create('GameManager', function (context) {
             this.root.addChild(player);
 
             return player;
+        },
+
+
+        GetPlayer: function (i) {
+            if (this.players && this.players[i]) {
+                return this.players[i].script.PlayerShip;
+            }
+        },
+
+
+        SetShips: function (player1ShipId, player2ShipId, invertYAxis) {
+            this.shipIds[0] = player1ShipId;
+            this.shipIds[1] = player2ShipId;
+            this.invertYAxis = invertYAxis;
+        },
+
+
+        GetWinner: function () {
+
+            if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
+                return { Winner: 0, ShipId: this.shipIds[0] };
+            } else {
+                // need to add code for ties
+                if (this.players[0].script.PlayerShip.score >= this.players[1].script.PlayerShip.score) {
+                    return { Winner: 0, ShipId: this.shipIds[0] };
+                } else {
+                    return { Winner: 1, ShipId: this.shipIds[1] };
+                }
+            }
         },
 
 
@@ -845,13 +874,6 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        SetShips: function (player1Ship, player2Ship, invertYAxis) {
-            this.shipFile[0] = player1Ship;
-            this.shipFile[1] = player2Ship;
-            this.invertYAxis = invertYAxis;
-        },
-        
-        
         ProcessInput: function (dt, inputManager) {
 
             if (!inputManager)
@@ -980,13 +1002,6 @@ pc.script.create('GameManager', function (context) {
                 }
             } else {
 
-            }
-        },
-
-
-        GetPlayer: function (i) {
-            if (this.players && this.players[i]) {
-                return this.players[i].script.PlayerShip;
             }
         },
 
