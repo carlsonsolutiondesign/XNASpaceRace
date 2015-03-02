@@ -48,15 +48,11 @@ pc.script.create('PlayerShip', function (context) {
 
             if (!this.IsAlive()) {
 
-                console.log('player is not alive.');
-
                 // when deadTime reaches 0 the player respawns
                 this.deadTime = Math.max(0, this.deadTime - dt);
 
                 // if player dead time expires, then respawn
                 if (this.IsAlive()) {
-
-                    console.log('respawning player.');
 
                     // reset energy, shield and boost
                     this.energy = 1.0;

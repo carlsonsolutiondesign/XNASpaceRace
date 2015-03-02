@@ -86,8 +86,8 @@ pc.script.create('CameraManager', function (context) {
 
         // Called every frame, dt is time in seconds since last update
         update: function (dt) {
-            
-            if(!this.lockCamera) {
+
+            if (!this.lockCamera) {
                 if (context.controller.wasPressed(CameraManager.nextCAMERA)) {
                     this.onNextCamera();
                 }
@@ -111,17 +111,17 @@ pc.script.create('CameraManager', function (context) {
                     ey += 1;
                 }
                 if (context.keyboard.isPressed(pc.KEY_Y)) {
-		    ex -= 1;
+		            ex -= 1;
                     ey -= 1;
                 } else if (context.keyboard.isPressed(pc.KEY_U)) {
-		    ex += 1;
+		            ex += 1;
                     ey -= 1;
                 }
                 if (context.keyboard.isPressed(pc.KEY_B)) {
-		    ex -= 1;
+		            ex -= 1;
                     ey += 1;
                 } else if (context.keyboard.isPressed(pc.KEY_N)) {
-		    ex += 1;
+		            ex += 1;
                     ey += 1;
                 }
 

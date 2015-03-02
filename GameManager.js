@@ -897,12 +897,6 @@ pc.script.create('GameManager', function (context) {
 
             if (!gd)
                 return;
-
-            gd.clear({
-                color: [0.0, 0.0, 0.0, 1.0],
-                depth: 1.0,
-                flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH
-            });
         },
 
 

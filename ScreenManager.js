@@ -65,6 +65,9 @@ pc.script.create('ScreenManager', function (context) {
         this.blurManager = null;                            // 
         
         this.backgroundTime = 0.0;                          // time for background animation on menus
+
+        this.command = null;
+        this.depth = 1;
     };
 
 
@@ -174,6 +177,16 @@ pc.script.create('ScreenManager', function (context) {
             this.glowRT2 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer2, {Depth: false});
 
             this.blurManager.LoadContent(GameOptions.GlowResolution, GameOptions.GlowResolution);
+
+            var command = new pc.Command(pc.LAYER_HUD, pc.BLEND_NORMAL, function () {
+                this.Draw3D();
+                this.Draw2D();
+            }.bind(this));
+
+            this.command = command;
+            command.key = this.depth;
+
+            context.scene.drawCalls.push(command);
         },
         
         
@@ -247,15 +260,15 @@ pc.script.create('ScreenManager', function (context) {
             
             var gd = context.graphicsDevice;
 
-            gd.setRenderTarget(null);
-            gd.updateBegin();
+            //gd.setRenderTarget(null);
+            //gd.updateBegin();
 
             //gd.updateBegin();
-            gd.clear({
-                color: [0.0, 0.0, 1.0, 1.0],
-                depth: 1.0,
-                flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH
-            });
+            //gd.clear({
+            //    color: [0.0, 0.0, 1.0, 1.0],
+            //    depth: 1.0,
+            //    flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH
+            //});
             //gd.updateEnd();
 
             this.SetNoBlending(gd);
@@ -292,7 +305,7 @@ pc.script.create('ScreenManager', function (context) {
 
             var gd = context.graphicsDevice;
 
-            gd.updateBegin();
+            //gd.updateBegin();
 
             if (this.currentScreen) {
                 this.currentScreen.Draw2D(gd, this.fontManager);
@@ -307,7 +320,7 @@ pc.script.create('ScreenManager', function (context) {
                 this.FadeScene(gd, this.fadeColor);
             }
 
-            gd.updateEnd();
+            //gd.updateEnd();
         },
 
 
