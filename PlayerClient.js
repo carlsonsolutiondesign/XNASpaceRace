@@ -5,9 +5,6 @@ pc.script.create('PlayerClient', function(context) {
 		this.socket = socket;
 		this.position = [0,0,0,0]; // x, y, z, time
 		this.orientation = [0,0,0]; // x, y, z
-		socket.on('serverupdate', Player.prototype.serverupdate);
-		socket.on('servercapability', PlayerClient.prototype.servercapability);
-		socket.emit('clientrejoin', location.href);
 	};
 	PlayerClient.prototype = {
 		serverupdate: function(playernumber, position, orientation) {
@@ -42,5 +39,8 @@ pc.script.create('PlayerClient', function(context) {
 			move(position, orientation);
 		}
 	};
+	PlayerClient.socket.on('serverupdate', Player.prototype.serverupdate);
+	PlayerClient.socket.on('servercapability', PlayerClient.prototype.servercapability);
+	PlayerClient.socket.emit('clientrejoin', location.href);
 });
 
