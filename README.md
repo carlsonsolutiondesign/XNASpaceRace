@@ -17,4 +17,7 @@ To install and start server:
 $ npm install
 $ node app.js
 
+
+You may need to separate app.js and MultiplayerServer.js from the rest of your client code.  Working on it.
+
 go to localhost:8088 in your browser

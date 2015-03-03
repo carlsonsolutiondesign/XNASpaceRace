@@ -7,12 +7,18 @@ pc.script.create('PlayerClient', function(context) {
 		this.orientation = [0,0,0]; // x, y, z
 	};
 	PlayerClient.prototype = {
+		servermessage: function(msg) {
+			console.log(msg);
+		},
 		serverupdate: function(playernumber, position, orientation) {
 			console.log(playernumber);
 			console.log(position);
 			this.position = position;
 			console.log(orientation);
 			this.orientation = orientation;
+		},
+		serverscore: function(playernumber, score) {
+			console.log(playernumber+" "+score);
 		},
 		servercapability: function() {
 			if ( history.pushState ) {
@@ -39,7 +45,9 @@ pc.script.create('PlayerClient', function(context) {
 			move(position, orientation);
 		}
 	};
+	PlayerClient.socket.on('servermessage', Player.prototype.servermessage);
 	PlayerClient.socket.on('serverupdate', Player.prototype.serverupdate);
+	PlayerClient.socket.on('serverscore', PlayerClient.prototype.serverscore);
 	PlayerClient.socket.on('servercapability', PlayerClient.prototype.servercapability);
 	PlayerClient.socket.emit('clientrejoin', location.href);
 	
