@@ -1,0 +1,14 @@
+{
+  "name": "xnaspacerace-w-multiplayerpack",
+  "version": "0.0.1",
+  "description": "XNASpaceRace with PlayCanvas multiplayer example game",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/r2d2Proton/XNASpaceRace"
+  },
+  "dependencies": {
+    "express": "~4.9.0",
+    "socket.io": "1.2.1"
+  }
+}
