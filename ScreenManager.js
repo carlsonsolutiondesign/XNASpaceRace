@@ -570,6 +570,8 @@ pc.script.create('ScreenManager', function (context) {
                     context.root.addChild(self.currentLevelPack.hierarchy);
 
                     pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+
+                    self.fire('LevelLoaded');
                 });
             }
         },

@@ -98,7 +98,6 @@ pc.script.create('GameManager', function (context) {
         this.currentLevel = null;
 
         this.players = [];
-        this.shipIds = [];
         this.invertYAxis = 0;
 
         this.realCrosshairTexture = null;
@@ -243,13 +242,15 @@ pc.script.create('GameManager', function (context) {
             this.currentLevel = 0; //window.GameManager.Levels.RedSpace;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
-            this.players = [this.AddPlayer('player1'), this.AddPlayer('player2')];
+            this.players = [this.AddPlayer('player1', 0), this.AddPlayer('player2', 1)];
 
             this.counter = 0;
+
+            this.screenManager.on('LevelLoaded', this.LevelLoaded, this);
         },
         
         
-        AddPlayer: function (name) {
+        AddPlayer: function (name, index) {
 
             var player = new pc.Entity(context);
             player.setName(name);
@@ -258,9 +259,13 @@ pc.script.create('GameManager', function (context) {
             {
                 scripts:
                 [
-                    { url: 'PlayerShip.js' }
+                    { url: 'PlayerShip.js', name: 'PlayerShip' },
+                    { url: 'PlayerClient.js', name: 'PlayerClient' },
                 ]
             });
+
+            player.script.PlayerShip.index = index;
+            player.script.PlayerShip.shipId = 0;
 
             this.root.addChild(player);
 
@@ -276,8 +281,9 @@ pc.script.create('GameManager', function (context) {
 
 
         SetShips: function (player1ShipId, player2ShipId, invertYAxis) {
-            this.shipIds[0] = player1ShipId;
-            this.shipIds[1] = player2ShipId;
+            this.players[0].script.PlayerShip.shipId = player1ShipId;
+            this.players[1].script.PlayerShip.shipId = player2ShipId;
+
             this.invertYAxis = invertYAxis;
         },
 
@@ -285,13 +291,13 @@ pc.script.create('GameManager', function (context) {
         GetWinner: function () {
 
             if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
-                return { Winner: 0, ShipId: this.shipIds[0] };
+                return { Winner: 0, ShipId: this.players[0].script.PlayerShip.shipId };
             } else {
                 // need to add code for ties
                 if (this.players[0].script.PlayerShip.score >= this.players[1].script.PlayerShip.score) {
-                    return { Winner: 0, ShipId: this.shipIds[0] };
+                    return { Winner: 0, ShipId: this.players[0].script.PlayerShip.shipId };
                 } else {
-                    return { Winner: 1, ShipId: this.shipIds[1] };
+                    return { Winner: 1, ShipId: this.players[1].script.PlayerShip.shipId };
                 }
             }
         },
@@ -309,7 +315,7 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        LoadAssets: function () {
+        LevelLoaded: function () {
 
             var assets = [];
 
@@ -340,6 +346,16 @@ pc.script.create('GameManager', function (context) {
                 this.realEnergyTexture = resources[3];
                 this.realHUDBarsTexture = resources[4];
             }.bind(this));
+
+            // Temporary code to find the first spawn point, and update the model
+            var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
+            if (playerSpawnPoint) {
+                var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
+                context.assets.load(asset).then(function (resources){
+                    playerSpawnPoint.model.model = resources[0];
+                    this.players[0].script.PlayerShip.shipModel = playerSpawnPoint;
+                }.bind(this));
+            }
         },
 
 
@@ -362,7 +378,6 @@ pc.script.create('GameManager', function (context) {
                 }
 
                 this.currentLevel = window.GameManager.LevelIds[idx].name;
-                //this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
             }
         },
 
@@ -386,8 +401,6 @@ pc.script.create('GameManager', function (context) {
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx].name;
                     this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
-
-                    this.LoadAssets();
                 }
             }
         },

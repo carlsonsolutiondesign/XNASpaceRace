@@ -4,6 +4,10 @@ pc.script.create('PlayerShip', function (context) {
     var PlayerShip = function (entity) {
         this.entity = entity;
 
+        this.playerClient = null;
+        this.index = 0;
+        this.shipId = null;
+
         this.shield = 1.0;                                      // current shield charge (1.0 when ready to use)
         this.boost = 1.0;                                       // curren boost charge (1.0 when ready to use)
         this.energy = 1.0;                                      // energy charge (0.0 when ship is destroyed)
@@ -37,6 +41,7 @@ pc.script.create('PlayerShip', function (context) {
 
         // Called once after all resources are loaded and before the first update
         initialize: function () {
+            this.playerClient = this.entity.script.PlayerClient;
         },
 
 
@@ -54,6 +59,9 @@ pc.script.create('PlayerShip', function (context) {
                 // if player dead time expires, then respawn
                 if (this.IsAlive()) {
 
+                    // find respawn point
+                    this.Spawn();
+
                     // reset energy, shield and boost
                     this.energy = 1.0;
                     this.shield = 1.0;
@@ -67,6 +75,16 @@ pc.script.create('PlayerShip', function (context) {
             if (this.simulate) {
                 this.Simulate();
             }
+        },
+
+
+        Spawn: function () {
+
+            if(!this.playerClient)
+                this.playerClient = this.entity.script.PlayerClient;
+
+            if (this.playerClient)
+                this.playerClient.fire('serverspawn', this.shipId, this.shipModel.getPosition(), this.shipModel.getEulerAngles());
         },
 
 
