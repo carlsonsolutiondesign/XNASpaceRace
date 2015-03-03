@@ -156,8 +156,9 @@ pc.script.create('ScreenManager', function (context) {
                 height: GameOptions.GlowResolution,
                 format: pc.PIXELFORMAT_R8_G8_B8_A8
             });
-            this.colorRT = new pc.RenderTarget(context.graphicsDevice, this.colorBuffer, {Depth: true});
-            
+            if (this.colorBuffer) {
+                this.colorRT = new pc.RenderTarget(context.graphicsDevice, this.colorBuffer, { Depth: true });
+            }
 
             this.glowBuffer1 = new pc.Texture( context.graphicsDevice,
             {
@@ -165,8 +166,9 @@ pc.script.create('ScreenManager', function (context) {
                 height: GameOptions.GlowResolution,
                 format: pc.PIXELFORMAT_R8_G8_B8_A8
             });
-            this.glowRT1 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer1, {Depth: false});
-            
+            if (this.glowBuffer1) {
+                this.glowRT1 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer1, { Depth: false });
+            }
             
             this.glowBuffer2 = new pc.Texture( context.graphicsDevice,
             {
@@ -174,9 +176,9 @@ pc.script.create('ScreenManager', function (context) {
                 height: GameOptions.GlowResolution,
                 format: pc.PIXELFORMAT_R8_G8_B8_A8
             });
-            this.glowRT2 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer2, {Depth: false});
-
-            this.blurManager.LoadContent(GameOptions.GlowResolution, GameOptions.GlowResolution);
+            if (this.glowBuffer2) {
+                this.glowRT2 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer2, { Depth: false });
+            }
 
             var command = new pc.Command(pc.LAYER_HUD, pc.BLEND_NORMAL, function () {
                 this.Draw3D();
@@ -256,20 +258,9 @@ pc.script.create('ScreenManager', function (context) {
         },
         
 
-        Draw3D: function(dt) {
+        Draw3D: function() {
             
             var gd = context.graphicsDevice;
-
-            //gd.setRenderTarget(null);
-            //gd.updateBegin();
-
-            //gd.updateBegin();
-            //gd.clear({
-            //    color: [0.0, 0.0, 1.0, 1.0],
-            //    depth: 1.0,
-            //    flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH
-            //});
-            //gd.updateEnd();
 
             this.SetNoBlending(gd);
             gd.setDepthWrite(true);
@@ -287,25 +278,16 @@ pc.script.create('ScreenManager', function (context) {
 
                     //this.BlurGlowRenderTarget(gd);
                     
-                    //gd.updateBegin();
                     //this.DrawRenderTargetTexture(gd, this.colorRT, 1.0, window.ScreenManager.BlendMode.None);
                     //this.DrawRenderTargetTexture(gd, this.glowRT2, 0.5, window.ScreenManager.BlendMode.AdditiveBlending);
-
-                    //this.currentScreen.Draw2D(gd, this.fontManager);
-
-                    //gd.updateEnd();
                 }
             }
-
-            gd.updateEnd();
         },
         
         
-        Draw2D: function (dt) {
+        Draw2D: function () {
 
             var gd = context.graphicsDevice;
-
-            //gd.updateBegin();
 
             if (this.currentScreen) {
                 this.currentScreen.Draw2D(gd, this.fontManager);
@@ -319,8 +301,6 @@ pc.script.create('ScreenManager', function (context) {
 
                 this.FadeScene(gd, this.fadeColor);
             }
-
-            //gd.updateEnd();
         },
 
 
@@ -339,9 +319,7 @@ pc.script.create('ScreenManager', function (context) {
             this.SetAlphaBlending(gd);
 
             // draw transition fade color
-            //gd.updateBegin();
             this.blurManager.RenderScreenQuad(gd, BlurManager.BlurTechnique.Color, null, color);
-            //gd.updateEnd();
 
             // restore render states
             gd.setDepthTest(prevDepthTest);
@@ -446,7 +424,7 @@ pc.script.create('ScreenManager', function (context) {
         },
         
         
-        DrawRenderTargetTexture: function(gd, texture, intensity, blendMode){
+        DrawRenderTargetTexture: function(gd, texture, intensity, blendMode) {
             
             if(!gd || !texture)
                 return;
