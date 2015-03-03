@@ -91,12 +91,15 @@ module.exports = function(pc) {
 					newposition[1] - oldposition[1], 
 					newposition[2] - oldposition[2]];
 				var distance = Math.sqrt(delta[0]*delta[0]+delta[1]*delta[1]+delta[2]*delta[2]);
+/* player can go anywhere
 				if (distance > 1) { // maximum distance player can travel
 					delta = [delta[0]/distance, delta[1]/distance, delta[2]/distance];
 					thisplayers[socket.client.id].position = [oldposition[0]+delta[0],
 						oldposition[1]+delta[1],
 						oldposition[2]+delta[2]];
-				} else {
+				} else
+*/
+				{
 					thisplayers[socket.client.id].position = newposition;
 				}
 				thisplayers[socket.client.id].orientation = orientation;
