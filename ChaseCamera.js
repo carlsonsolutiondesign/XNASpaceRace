@@ -35,6 +35,7 @@ pc.script.create('ChaseCamera', function (context) {
         //    * velocity of camera
         this.position = new pc.Vec3();
         this.velocity = new pc.Vec3();
+        this.playerClient = null;
     };
 
 
@@ -43,6 +44,7 @@ pc.script.create('ChaseCamera', function (context) {
         // Called once after all resources are loaded and before the first update
         initialize: function () {
             this.camera = context.root.findByName(this.cameraName);
+            this.playerClient = this.entity.script.PlayerClient;
             
             this.entity.collision.on('collisionstart', this.OnCollisionStart, this);
         },
@@ -148,6 +150,12 @@ pc.script.create('ChaseCamera', function (context) {
 
             this.lookAt = worldTransform.transformVector(this.lookAtOffset);
             this.lookAt.add(this.target.getPosition());
+            if(!this.playerClient)
+                this.playerClient = this.entity.script.PlayerClient;
+
+            if (this.playerClient)
+		this.playerClient.fire('move', this.target.getPosition(), this.target.getEulerAngles());
+            
         }
     };
 
