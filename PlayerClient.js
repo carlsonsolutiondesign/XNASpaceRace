@@ -1,10 +1,10 @@
-/*
-	Don't forget to put this above the data.js script in index.html
-    <script language="Javascript" src="http://cdn.socket.io/socket.io-1.2.1.js"></script>
-*/
 pc.script.create('PlayerClient', function(context) {
 	var PlayerClient = function (entity) {
-	    var socket = io();
+	    this.entity = entity;
+            if (!this.io)
+		    this.io = this.entity.script.SocketIO;
+	    var socket = this.io();
+		
 	    // var socket = entity;
 		this.entity = entity;
 		this.socket = socket;
