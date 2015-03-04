@@ -1,7 +1,11 @@
+/*
+	Don't forget to put this above the data.js script in index.html
+    <script language="Javascript" src="http://cdn.socket.io/socket.io-1.2.1.js"></script>
+*/
 pc.script.create('PlayerClient', function(context) {
 	var PlayerClient = function (entity) {
-	    //var socket = io();
-	    var socket = entity;
+	    var socket = io();
+	    // var socket = entity;
 		this.entity = entity;
 		this.socket = socket;
 		this.position = [0,0,0,0]; // x, y, z, time
@@ -18,20 +22,21 @@ pc.script.create('PlayerClient', function(context) {
 	        PlayerClient.socket.emit('clientrejoin', location.href);
 
             <-- possible alternative to the above code -->
+            */
 	        this.socket.on('servermessage', this.servermessage, this);
 	        this.socket.on('serverupdate', this.serverupdate, this);
-	        this.socket.on('serverspawn', this.serverspawn, this);
 	        this.socket.on('serverscore', this.serverscore, this);
 	        this.socket.on('servercapability', this.servercapability, this);
 	        this.socket.emit('clientrejoin', location.href);
-            */
 
             // but the below maybe correct as it attached the event to the script, which then can access the socket
+/*
 	        this.on('servermessage', this.servermessage, this);
 	        this.on('serverupdate', this.serverupdate, this);
-	        this.on('serverspawn', this.serverspawn, this);
 	        this.on('serverscore', this.serverscore, this);
 	        this.on('servercapability', this.servercapability, this);
+*/
+	        this.on('serverspawn', this.serverspawn, this);
 	    },
 
 		servermessage: function(msg) {
@@ -45,6 +50,7 @@ pc.script.create('PlayerClient', function(context) {
 
 		    this.position = position;
 		    this.orientation = orientation;
+		    this.move(this.position, this.orientation);
 		},
 
 		serverupdate: function (playernumber, position, orientation) {
@@ -83,7 +89,7 @@ pc.script.create('PlayerClient', function(context) {
 			this.orientation[0] += deltaorientation[0];
 			this.orientation[1] += deltaorientation[1];
 			this.orientation[2] += deltaorientation[2];
-			move(position, orientation);
+			this.move(position, orientation);
 		}
 	};
 
