@@ -11,7 +11,9 @@ pc.script.create('PlayerClient', function(context) {
 		console.log(this.entity);
 		console.log(this.entity.script);
 		console.log(this.entity.script.SocketIO);
+/*
 	        this.socket = this.entity.script.SocketIO.io();
+*/
             /*
 	        PlayerClient.socket.on('servermessage', Player.prototype.servermessage);
 	        PlayerClient.socket.on('serverupdate', Player.prototype.serverupdate);
@@ -21,11 +23,13 @@ pc.script.create('PlayerClient', function(context) {
 
             <-- possible alternative to the above code -->
             */
+/*
 	        this.socket.on('servermessage', this.servermessage, this);
 	        this.socket.on('serverupdate', this.serverupdate, this);
 	        this.socket.on('serverscore', this.serverscore, this);
 	        this.socket.on('servercapability', this.servercapability, this);
 	        this.socket.emit('clientrejoin', location.href);
+*/
 
             // but the below maybe correct as it attached the event to the script, which then can access the socket
 /*
@@ -76,7 +80,7 @@ pc.script.create('PlayerClient', function(context) {
 		},
 
 		move: function (position, orientation) {
-			this.socket.emit('clientmove', position, orientation);
+			// this.socket.emit('clientmove', position, orientation);
 		},
 
 		delta: function (deltaposition, deltaorientation) {
