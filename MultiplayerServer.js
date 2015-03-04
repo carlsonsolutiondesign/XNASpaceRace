@@ -1,5 +1,16 @@
-module.exports = function(pc) {
-   pc.script.create('MultiplayerServer', function(context) {
+if (!pc) {
+	var pc = {};
+	pc.script = (function() {
+		var script = {
+			 create: function (name, callback) {
+				console.log(name);
+				callback()();
+			}
+		};
+		return script;
+	}());
+}
+pc.script.create('MultiplayerServer', function(context) {
 	var MultiplayerServer = function(entity) {
 		maxplayers = 0;
 		thisplayers = {};
@@ -168,5 +179,4 @@ module.exports = function(pc) {
 	};
 	console.log(MultiplayerServer);
 	return MultiplayerServer;
-    });
-};
+});
