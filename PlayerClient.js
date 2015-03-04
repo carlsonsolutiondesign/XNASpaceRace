@@ -1,19 +1,17 @@
 pc.script.create('PlayerClient', function(context) {
 	var PlayerClient = function (entity) {
-	    this.entity = entity;
-            if (!this.io)
-		    this.io = this.entity.script.SocketIO;
-	    var socket = this.io();
-		
-	    // var socket = entity;
 		this.entity = entity;
-		this.socket = socket;
 		this.position = [0,0,0,0]; // x, y, z, time
 		this.orientation = [0,0,0]; // x, y, z
 	};
 
 	PlayerClient.prototype = {
 	    initialize: function () {
+		console.log(this);
+		console.log(this.entity);
+		console.log(this.entity.script);
+		console.log(this.entity.script.SocketIO);
+	        this.socket = this.entity.script.SocketIO.io();
             /*
 	        PlayerClient.socket.on('servermessage', Player.prototype.servermessage);
 	        PlayerClient.socket.on('serverupdate', Player.prototype.serverupdate);
