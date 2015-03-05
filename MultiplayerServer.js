@@ -1,5 +1,16 @@
-module.exports = function(pc) {
-   pc.script.create('MultiplayerServer', function(context) {
+if (!pc) {
+	var pc = {};
+	pc.script = (function() {
+		var script = {
+			 create: function (name, callback) {
+				console.log(name);
+				callback()();
+			}
+		};
+		return script;
+	}());
+}
+pc.script.create('MultiplayerServer', function(context) {
 	var MultiplayerServer = function(entity) {
 		maxplayers = 0;
 		thisplayers = {};
@@ -56,12 +67,18 @@ module.exports = function(pc) {
 		  });
 		});
 
-		var defaultPort = 8088;
+		var defaultPort = 51000;
 
 		module.exports = this.http.listen(process.env.PORT || defaultPort);
 
 		console.log('express server started on port %s', process.env.PORT || defaultPort);
 
+/*
+		this.http.on('request', function (req, res) {
+				console.log(req.url);
+			}
+		);
+*/
 		this.http.on('error', function (e) {
 		  if (e.code == 'EADDRINUSE') {
 		    console.log('Address in use, exiting...');
@@ -140,7 +157,7 @@ module.exports = function(pc) {
 		clientturnbegin: function() {console.log(arguments);},
 		clientturnend: function() {console.log(arguments);},
 		clientrejoin: function(socket, msg) {
-			var i = msg[0].indexOf("?");
+			var i = msg[0].indexOf("#");
 			if (i >= 0) {
 				var id = msg[0].substring(i+1);
 				if (typeof oldplayers[id] !== 'undefined') {
@@ -168,5 +185,4 @@ module.exports = function(pc) {
 	};
 	console.log(MultiplayerServer);
 	return MultiplayerServer;
-    });
-};
+});

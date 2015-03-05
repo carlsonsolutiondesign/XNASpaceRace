@@ -9,6 +9,8 @@
   },
   "dependencies": {
     "express": "~4.9.0",
-    "socket.io": "1.2.1"
+    "socket.io": "1.2.1",
+    "socket.io-client": "1.2.1",
+    "webrtc.io-client": "0.0.2"
   }
 }

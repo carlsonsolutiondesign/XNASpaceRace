@@ -1,25 +1,31 @@
-/*
-	Don't forget to put this above the data.js script in index.html
-    <script language="Javascript" src="http://cdn.socket.io/socket.io-1.2.1.js"></script>
-*/
+pc.script.attribute('connection', 'string', 'http://localhost:51000',
+{
+    displayName: "Remote Game Connection"
+});
 pc.script.create('PlayerClient', function(context) {
 	var PlayerClient = function (entity) {
-	    var socket = io();
-	    // var socket = entity;
 		this.entity = entity;
-		this.socket = socket;
 		this.position = [0,0,0,0]; // x, y, z, time
 		this.orientation = [0,0,0]; // x, y, z
 	};
 
 	PlayerClient.prototype = {
 	    initialize: function () {
-	        this.socket.on('servermessage', this.servermessage, this);
-	        this.socket.on('serverupdate', this.serverupdate, this);
-	        this.socket.on('serverscore', this.serverscore, this);
-	        this.socket.on('servercapability', this.servercapability, this);
-	        this.socket.emit('clientrejoin', location.href);
-
+		console.log(this.connection);
+		var connection = "missing socket.io script in index.html";
+		if (typeof io !== 'undefined') {
+            		connection = context.root.findByName(this.connection);
+			this.socket = io.connect(connection);
+		}
+		if (this.socket) {
+			this.socket.on('servermessage', this.servermessage, this);
+			this.socket.on('serverupdate', this.serverupdate, this);
+			this.socket.on('serverscore', this.serverscore, this);
+			this.socket.on('servercapability', this.servercapability, this);
+			this.socket.emit('clientrejoin', location.href);
+		} else {
+			console.log("Failed to connect to "+connection);
+		}
 	        this.on('serverspawn', this.serverspawn, this);
 	    },
 
@@ -52,17 +58,19 @@ pc.script.create('PlayerClient', function(context) {
 		servercapability: function () {
 			if ( history.pushState ) {
 				var href = location.href;
-				var i = href.indexOf("?");
+				var i = href.indexOf("#");
 				if (i >= 0) {
 					href = href.substring(0, i);
 				}
-				history.pushState( {}, document.title, href+"?"+arguments[0].id );
+				history.pushState( {}, document.title, href+"#"+arguments[0].id );
 			}
 			this.player = arguments[1];
 		},
 
 		move: function (position, orientation) {
-			this.socket.emit('clientmove', position, orientation);
+			if (this.socket) {
+				this.socket.emit('clientmove', position, orientation);
+			}
 		},
 
 		delta: function (deltaposition, deltaorientation) {
