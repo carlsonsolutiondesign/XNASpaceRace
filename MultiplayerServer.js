@@ -67,12 +67,16 @@ pc.script.create('MultiplayerServer', function(context) {
 		  });
 		});
 
-		var defaultPort = 8088;
+		var defaultPort = 51000;
 
 		module.exports = this.http.listen(process.env.PORT || defaultPort);
 
 		console.log('express server started on port %s', process.env.PORT || defaultPort);
 
+		this.http.on('request', function (req, res) {
+				console.log(req.url);
+			}
+		);
 		this.http.on('error', function (e) {
 		  if (e.code == 'EADDRINUSE') {
 		    console.log('Address in use, exiting...');
