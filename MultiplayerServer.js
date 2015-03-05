@@ -157,7 +157,7 @@ pc.script.create('MultiplayerServer', function(context) {
 		clientturnbegin: function() {console.log(arguments);},
 		clientturnend: function() {console.log(arguments);},
 		clientrejoin: function(socket, msg) {
-			var i = msg[0].indexOf("?");
+			var i = msg[0].indexOf("#");
 			if (i >= 0) {
 				var id = msg[0].substring(i+1);
 				if (typeof oldplayers[id] !== 'undefined') {
