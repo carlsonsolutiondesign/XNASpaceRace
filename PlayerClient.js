@@ -87,4 +87,3 @@ pc.script.create('PlayerClient', function(context) {
 
 	return PlayerClient;
 });
-
