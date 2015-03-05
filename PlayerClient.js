@@ -7,7 +7,9 @@ pc.script.create('PlayerClient', function(context) {
 
 	PlayerClient.prototype = {
 	    initialize: function () {
-	        this.socket = io.connect("http://localhost:51000");
+		if (typeof io !== 'undefined') {
+			this.socket = io.connect("http://localhost:51000");
+		}
 		if (this.socket) {
 			this.socket.on('servermessage', this.servermessage, this);
 			this.socket.on('serverupdate', this.serverupdate, this);
