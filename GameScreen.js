@@ -18,6 +18,7 @@ pc.script.create('GameScreen', function (context) {
             this.root = context.root.getChildren()[0];
             this.screenManager = this.root.script.ScreenManager;
             this.gameManager = this.root.script.GameManager;
+            this.soundManager = this.root.script.SoundManager;
         },
         
         
@@ -37,7 +38,7 @@ pc.script.create('GameScreen', function (context) {
             this.gameManager.ProcessInput(dt, inputManager);
 
             for (var i = 0; i < this.gameManager.gameMode; i++) {
-                if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasBackButtonPressed(i)) {
+                if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBackButtonPressed(i)) {
 
                     var player = this.gameManager.GetPlayer(i);
                     if (player) {
@@ -45,7 +46,8 @@ pc.script.create('GameScreen', function (context) {
                     }
 
                     this.screenManager.SetNextScreen(ScreenManager.ScreenType.EndScreen);
-                    this.soundManager.Play(SoundManager.Sound.MenuCancel);
+                    this.screenManager._unloadLevel();
+                    this.soundManager.PlaySound(SoundManager.Sound.MenuCancel);
                 }
             }
         },

@@ -58,6 +58,9 @@ pc.script.create('SpriteManager', function (context) {
 
             var gd = context.graphicsDevice;
 
+            this.projection = new pc.Mat4();
+            this.modelView = new pc.Mat4();
+
             this.CreateColorShader(gd);
             this.CreateColorTextureShader(gd);
 
@@ -70,7 +73,20 @@ pc.script.create('SpriteManager', function (context) {
         },
 
 
-        RenderSprite: function(gd, technique, texture, color, x, y, width, height, rotation) {
+        RenderClipSprite: function (gd, technique, texture, rect, clipRect, color, rotation) {
+
+            if (!gd)
+                return;
+
+            gd.setScissor(clipRect.x, clipRect.y, clipRect.z, clipRect.w);
+
+            this.RenderSprite(gd, technique, texture, rect, color, rotation);
+
+            gd.setScissor(0, 0, gd.width, gd.height);
+        },
+
+
+        RenderSprite: function (gd, technique, texture, rect, color, rotation) {
 
             if(!gd)
                 return;
@@ -89,7 +105,7 @@ pc.script.create('SpriteManager', function (context) {
                 this.texRotation.mul(t2);
             }
 
-            this.UpdateVertexBuffer(gd, x, y, width, height);
+            this.UpdateVertexBuffer(gd, rect.x, rect.y, rect.z, rect.w);
 
             switch (technique) {
                 case window.SpriteManager.RenderTechnique.Color:
@@ -142,6 +158,7 @@ pc.script.create('SpriteManager', function (context) {
             iterator.next();
             iterator.element[pc.SEMANTIC_POSITION].set(x+width, y);
             iterator.element[pc.SEMANTIC_TEXCOORD0].set(1, 1);
+
             iterator.end();
 
             this.vertexBuffer.unlock();
@@ -200,14 +217,14 @@ pc.script.create('SpriteManager', function (context) {
                     "void main(void)",
                     "{",
                     "   theTextureCoord = aTexCoord;",
-                    "",
-                    "   gl_Position = projection * modelView * vec4(aPosition.xy, 0.5, 1.0);",
+                    "   gl_Position = projection * modelView * vec4(aPosition.xy, 0.0, 1.0);",
                     "}"
                 ].join("\n"),
                 fshader: [
                     "precision " + context.graphicsDevice.precision + " float;",
                     "",
                     "uniform vec4 modColor;",
+                    "uniform vec2 uvScale;",
                     "uniform mat4 rotation;",
                     "uniform sampler2D theColorMap;",
                     "",

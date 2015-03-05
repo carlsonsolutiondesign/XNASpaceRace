@@ -67,8 +67,8 @@ pc.script.create('BootManager', function (context) {
         },
         
         
-        fixedUpdate: function(dt) {
-            
+        // Called every frame, dt is time in seconds since last update
+        update: function (dt) {
             this.totalTime += dt;
 
             this.screenManager.ProcessInput(dt);
@@ -76,14 +76,7 @@ pc.script.create('BootManager', function (context) {
         },
         
         
-        // Called every frame, dt is time in seconds since last update
-        update: function (dt) {
-            
-            this.screenManager.Draw(dt);
-        },
-        
-        
-        ToggleFullScreen: function() {
+        ToggleFullScreen: function () {
             if(context.isFullscreen()) {
                 context.disableFullscreen();
             } else {

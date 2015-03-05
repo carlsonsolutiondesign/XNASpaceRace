@@ -225,10 +225,6 @@ pc.script.create('BlurManager', function (context) {
         },
         
         
-        LoadContent: function(width, height) {
-        },
-        
-        
         UpdateVertexBuffer: function (gd, x, y, width, height) {
 
             this.vertexBuffer.lock();
