@@ -67,7 +67,7 @@ pc.script.create('MultiplayerServer', function(context) {
 		  });
 		});
 
-		var defaultPort = 51000;
+		var defaultPort = 8088;
 
 		module.exports = this.http.listen(process.env.PORT || defaultPort);
 

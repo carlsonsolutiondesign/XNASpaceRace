@@ -7,7 +7,7 @@ pc.script.attribute('host', 'string', 'localhost',
     displayName: "Remote Host"
 });
 
-pc.script.attribute('port', 'number', 51000,
+pc.script.attribute('port', 'number', 8088,
 {
     displayName: "Remote Port"
 });
@@ -18,7 +18,7 @@ pc.script.create('PlayerClient', function(context) {
 		this.position = [0,0,0,0]; // x, y, z, time
 		this.orientation = [0,0,0]; // x, y, z
 		this.host = "localhost";
-		this.port = 51000;
+		this.port = 8088;
 	};
 
 	PlayerClient.prototype = {
