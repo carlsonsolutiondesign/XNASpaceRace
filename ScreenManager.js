@@ -65,6 +65,9 @@ pc.script.create('ScreenManager', function (context) {
         this.blurManager = null;                            // 
         
         this.backgroundTime = 0.0;                          // time for background animation on menus
+
+        this.command = null;
+        this.depth = 1;
     };
 
 
@@ -72,7 +75,7 @@ pc.script.create('ScreenManager', function (context) {
     {
         ScreenType: Object.freeze({IntroScreen: 0, HelpScreen: 1, PlayerScreen: 2, LevelScreen: 3, GameScreen: 4, EndScreen: 5}),
         
-        Menu: Object.freeze({ id: "352638" }),
+        Menu: Object.freeze({ id: 352638 }),
 
         BlendMode: Object.freeze({ None: 0, AdditiveBlending: 1, AlphaBlending: 2 })
     };
@@ -153,8 +156,9 @@ pc.script.create('ScreenManager', function (context) {
                 height: GameOptions.GlowResolution,
                 format: pc.PIXELFORMAT_R8_G8_B8_A8
             });
-            this.colorRT = new pc.RenderTarget(context.graphicsDevice, this.colorBuffer, {Depth: true});
-            
+            if (this.colorBuffer) {
+                this.colorRT = new pc.RenderTarget(context.graphicsDevice, this.colorBuffer, { Depth: true });
+            }
 
             this.glowBuffer1 = new pc.Texture( context.graphicsDevice,
             {
@@ -162,8 +166,9 @@ pc.script.create('ScreenManager', function (context) {
                 height: GameOptions.GlowResolution,
                 format: pc.PIXELFORMAT_R8_G8_B8_A8
             });
-            this.glowRT1 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer1, {Depth: false});
-            
+            if (this.glowBuffer1) {
+                this.glowRT1 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer1, { Depth: false });
+            }
             
             this.glowBuffer2 = new pc.Texture( context.graphicsDevice,
             {
@@ -171,9 +176,19 @@ pc.script.create('ScreenManager', function (context) {
                 height: GameOptions.GlowResolution,
                 format: pc.PIXELFORMAT_R8_G8_B8_A8
             });
-            this.glowRT2 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer2, {Depth: false});
+            if (this.glowBuffer2) {
+                this.glowRT2 = new pc.RenderTarget(context.graphicsDevice, this.glowBuffer2, { Depth: false });
+            }
 
-            this.blurManager.LoadContent(GameOptions.GlowResolution, GameOptions.GlowResolution);
+            var command = new pc.Command(pc.LAYER_HUD, pc.BLEND_NORMAL, function () {
+                this.Draw3D();
+                this.Draw2D();
+            }.bind(this));
+
+            this.command = command;
+            command.key = this.depth;
+
+            context.scene.drawCalls.push(command);
         },
         
         
@@ -243,23 +258,9 @@ pc.script.create('ScreenManager', function (context) {
         },
         
 
-        Draw: function(dt) {
+        Draw3D: function() {
             
             var gd = context.graphicsDevice;
-
-            if (!gd || this.currentScreen === this.root.script.GameScreen)
-                return;
-
-            gd.setRenderTarget(null);
-            gd.updateBegin();
-
-            //gd.updateBegin();
-            gd.clear({
-                color: [0.0, 0.0, 1.0, 1.0],
-                depth: 1.0,
-                flags: pc.CLEARFLAG_COLOR | pc.CLEARFLAG_DEPTH
-            });
-            //gd.updateEnd();
 
             this.SetNoBlending(gd);
             gd.setDepthWrite(true);
@@ -277,47 +278,57 @@ pc.script.create('ScreenManager', function (context) {
 
                     //this.BlurGlowRenderTarget(gd);
                     
-                    //gd.updateBegin();
                     //this.DrawRenderTargetTexture(gd, this.colorRT, 1.0, window.ScreenManager.BlendMode.None);
                     //this.DrawRenderTargetTexture(gd, this.glowRT2, 0.5, window.ScreenManager.BlendMode.AdditiveBlending);
-                    this.currentScreen.Draw2D(gd, this.fontManager);
-                    //gd.updateEnd();
                 }
             }
+        },
+        
+        
+        Draw2D: function () {
 
+            var gd = context.graphicsDevice;
+
+            if (this.currentScreen) {
+                this.currentScreen.Draw2D(gd, this.fontManager);
+            }
 
             // fade if in a transition
-            if (this.fade > 0)
-            {
+            if (this.fade > 0) {
                 // compute transtition fade intensity
                 var size = this.fadeTime * 0.5;
                 this.fadeColor.w = 1.25 * (1.0 - Math.abs(this.fade - size) / size);
 
-                // set alpha blend and no depth test or write
-                var prevBlending = gd.getBlending();
-                var prevDepthWrite = gd.getDepthWrite();
-                var prevDepthTest  = gd.getDepthTest();
-            
-                gd.setDepthWrite(false);
-                gd.setDepthTest(false);
-                this.SetAlphaBlending(gd);
-            
-                // draw transition fade color
-                //gd.updateBegin();
-                this.blurManager.RenderScreenQuad(gd, BlurManager.BlurTechnique.Color, null, this.fadeColor);
-                //gd.updateEnd();
-
-                // restore render states
-                gd.setDepthTest(prevDepthTest);
-                gd.setDepthWrite(prevDepthWrite);
-                gd.setBlending(prevBlending);
+                this.FadeScene(gd, this.fadeColor);
             }
-
-            gd.updateEnd();
         },
-        
-        
-        DrawBackground: function(gd) {
+
+
+        FadeScene: function (gd, color) {
+
+            if (!gd)
+                return;
+
+            // set alpha blend and no depth test or write
+            var prevBlending = gd.getBlending();
+            var prevDepthWrite = gd.getDepthWrite();
+            var prevDepthTest = gd.getDepthTest();
+
+            gd.setDepthWrite(false);
+            gd.setDepthTest(false);
+            this.SetAlphaBlending(gd);
+
+            // draw transition fade color
+            this.blurManager.RenderScreenQuad(gd, BlurManager.BlurTechnique.Color, null, color);
+
+            // restore render states
+            gd.setDepthTest(prevDepthTest);
+            gd.setDepthWrite(prevDepthWrite);
+            gd.setBlending(prevBlending);
+        },
+
+
+        DrawBackground: function (gd) {
             
             const animationTime = 3.0;
             const animationLength = 0.8;
@@ -413,7 +424,7 @@ pc.script.create('ScreenManager', function (context) {
         },
         
         
-        DrawRenderTargetTexture: function(gd, texture, intensity, blendMode){
+        DrawRenderTargetTexture: function(gd, texture, intensity, blendMode) {
             
             if(!gd || !texture)
                 return;
@@ -447,7 +458,43 @@ pc.script.create('ScreenManager', function (context) {
             gd.setBlending(prevBlending);
         },
         
-        
+
+        DrawClippedTexture: function (gd, texture, rect, clipRect, color, blendMode, rotation) {
+
+            if (!gd || !texture)
+                return;
+
+            if (typeof (rotation) === 'undefined') rotation = 0.0;
+
+            var prevBlending = gd.getBlending();
+            var prevDepthWrite = gd.getDepthWrite();
+            var prevDepthTest = gd.getDepthTest();
+
+            gd.setDepthWrite(false);
+            gd.setDepthTest(false);
+
+            switch (blendMode) {
+                case window.ScreenManager.BlendMode.None:
+                    this.SetNoBlending(gd);
+                    break;
+
+                case window.ScreenManager.BlendMode.AdditiveBlending:
+                    this.SetAdditiveBlending(gd);
+                    break;
+
+                case window.ScreenManager.BlendMode.AlphaBlending:
+                    this.SetAlphaBlending(gd);
+                    break;
+            }
+
+            this.spriteManager.RenderClipSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, rect, clipRect, color, rotation);
+
+            gd.setDepthTest(prevDepthTest);
+            gd.setDepthWrite(prevDepthWrite);
+            gd.setBlending(prevBlending);
+        },
+
+
         DrawTexture: function(gd, texture, rect, color, blendMode, rotation) {
 
             if(!gd || !texture)
@@ -476,7 +523,7 @@ pc.script.create('ScreenManager', function (context) {
                     break;
             }
             
-            this.spriteManager.RenderSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, color, rect.x, rect.y, rect.z, rect.w, rotation);
+            this.spriteManager.RenderSprite(gd, SpriteManager.RenderTechnique.ColorTexture, texture, rect, color, rotation);
             
             gd.setDepthTest(prevDepthTest);
             gd.setDepthWrite(prevDepthWrite);
@@ -522,8 +569,9 @@ pc.script.create('ScreenManager', function (context) {
 
                     context.root.addChild(self.currentLevelPack.hierarchy);
 
-                    //pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
-                    pc.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+                    pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
+
+                    self.fire('LevelLoaded');
                 });
             }
         },
