@@ -38,6 +38,14 @@ pc.script.create('MultiplayerServer', function(context) {
 				console.log("Unrecognized client "+socket.client.id);
 			}
 		  });
+		  socket.on('clientspawn', function() {
+			if (thisplayers[socket.client.id]) { // if joined
+				console.log(arguments);
+				MultiplayerServer.prototype.clientspawn(socket, arguments[0]);
+			} else {
+				console.log("Unrecognized client "+socket.client.id);
+			}
+		  });
 		  socket.on('clientshoot', MultiplayerServer.prototype.clientshoot);
 		  socket.on('clientslash', MultiplayerServer.prototype.clientslash);
 		  socket.on('clientpowerplay', MultiplayerServer.prototype.clientpowerplay);
@@ -67,7 +75,7 @@ pc.script.create('MultiplayerServer', function(context) {
 		  });
 		});
 
-		var defaultPort = 51000;
+		var defaultPort = 8088;
 
 		module.exports = this.http.listen(process.env.PORT || defaultPort);
 
@@ -98,6 +106,9 @@ pc.script.create('MultiplayerServer', function(context) {
 		clientmessage: function(socket, msg) {
 			io.emit('servermessage', "<"+thisplayers[socket.client.id].playernumber+"> "+msg[0]);
 		},
+		clientspawn: function(socket, shipId) {
+			io.emit('serverspawn', thisplayers[socket.client.id].playernumber, shipId, thisplayers[socket.client.id].position, thisplayers[socket.client.id].orientation);
+	        },
 		clientmove: function(socket, position, orientation) {
 			console.log(position);
 			console.log(orientation);

@@ -79,12 +79,16 @@ pc.script.create('PlayerShip', function (context) {
 
 
         Spawn: function () {
+	    console.log("Calling PlayerShip spawn function");
 
             if(!this.playerClient)
                 this.playerClient = this.entity.script.PlayerClient;
 
-            if (this.playerClient)
-                this.playerClient.fire('serverspawn', this.shipId, this.shipModel.getPosition(), this.shipModel.getEulerAngles());
+            if (this.playerClient) {
+	    	console.log("Calling client spawn function");
+                this.playerClient.fire('spawn', this.shipId);
+	    	console.log("Done calling client spawn function");
+	    }
         },
 
 
