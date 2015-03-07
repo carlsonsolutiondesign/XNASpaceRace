@@ -34,30 +34,24 @@ pc.script.create('PlayerClient', function(context) {
 			this.socket.on('serverupdate', this.serverupdate, this);
 			this.socket.on('serverscore', this.serverscore, this);
 			this.socket.on('servercapability', this.servercapability, this);
+			this.socket.on('serverspawn', this.serverspawn, this);
 			this.socket.emit('clientrejoin', location.href);
 		} else {
 			console.log("Failed to connect to "+this.host+":"+this.port);
 		}
-	        this.on('serverspawn', this.serverspawn, this);
+	        this.on('spawn', this.spawn, this);
 	    },
 
 		servermessage: function(msg) {
 			console.log(msg);
 		},
 
-		serverspawn: function (playernumber, position, orientation) {
+		serverspawn: function (playernumber, shipId, position, orientation) {
 		    console.log('Respawn: playerId: ' + playernumber
+		      + ' ship id ' + shipId
                       + '  position: (' + position.x.toFixed(3) + ', ' + position.y.toFixed(3) + ', ' + position.z.toFixed(3) + ')'
                       + '  orientation: (' + orientation.x.toFixed(3) + ', ' + orientation.y.toFixed(3) + ', ' + orientation.z.toFixed(3) + ')');
 
-		    this.position = position;
-		    this.orientation = orientation;
-		    this.move(this.position, this.orientation);
-		},
-
-		serverupdate: function (playernumber, position, orientation) {
-		// $('#messages').append($('<li>').text(playernumber+" at "+position+" turns "+orientation));
-		if (typeof players[playernumber] === 'undefined') {
 			console.log("New player "+playernumber+" at "+position+" turns "+orientation);
 			players[playernumber] = {
 				position: position,
@@ -65,15 +59,21 @@ pc.script.create('PlayerClient', function(context) {
 			};
 			console.log(playernumber+" initialized");
 			// create new ship for other player
-		} else {
-			players[playernumber].position = position;
-			players[playernumber].orientation = orientation;
-		}
-		if (this.player == playernumber) {
-			if (position[0] === 0 && position[1] === 0 && position[2] === 0) {
-				alert("Beginning again");
+		},
+
+		serverupdate: function (playernumber, position, orientation) {
+			// $('#messages').append($('<li>').text(playernumber+" at "+position+" turns "+orientation));
+			if (typeof players[playernumber] === 'undefined') {
+				console.log("Player needs to spawn first before sending updates");
+			} else {
+				players[playernumber].position = position;
+				players[playernumber].orientation = orientation;
 			}
-		}
+			if (this.player == playernumber) {
+				if (position[0] === 0 && position[1] === 0 && position[2] === 0) {
+					// alert("Beginning again");
+				}
+			}
 		},
 
 		serverscore: function (playernumber, score) {
@@ -92,6 +92,12 @@ pc.script.create('PlayerClient', function(context) {
 			this.player = arguments[1];
 		},
 
+		spawn: function(shipId) {
+			if (this.socket) {
+				console.log("Spawning "+shipId);
+				this.socket.emit('clientspawn', shipId);
+			}
+		},
 		move: function (position, orientation) {
 			if (this.socket) {
 				this.socket.emit('clientmove', position, orientation);
