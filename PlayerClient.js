@@ -19,6 +19,7 @@ pc.script.create('PlayerClient', function(context) {
 		this.orientation = [0,0,0]; // x, y, z
 		this.host = "localhost";
 		this.port = 8088;
+		players = [];
 	};
 
 	PlayerClient.prototype = {
@@ -55,11 +56,24 @@ pc.script.create('PlayerClient', function(context) {
 		},
 
 		serverupdate: function (playernumber, position, orientation) {
-			console.log(playernumber);
-			console.log(position);
-			this.position = position;
-			console.log(orientation);
-			this.orientation = orientation;
+		// $('#messages').append($('<li>').text(playernumber+" at "+position+" turns "+orientation));
+		if (typeof players[playernumber] === 'undefined') {
+			console.log("New player "+playernumber+" at "+position+" turns "+orientation);
+			players[playernumber] = {
+				position: position,
+				orientation: orientation
+			};
+			console.log(playernumber+" initialized");
+			// create new ship for other player
+		} else {
+			players[playernumber].position = position;
+			players[playernumber].orientation = orientation;
+		}
+		if (this.player == playernumber) {
+			if (position[0] === 0 && position[1] === 0 && position[2] === 0) {
+				alert("Beginning again");
+			}
+		}
 		},
 
 		serverscore: function (playernumber, score) {
