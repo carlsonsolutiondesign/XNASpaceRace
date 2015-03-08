@@ -900,9 +900,9 @@ pc.script.create('GameManager', function (context) {
 
             this.players[0].script.PlayerShip.Update(dt);
 
-            if (this.elapsedTime > 8.0) {
-                this.players[0].script.PlayerShip.simulate = true;
-            }
+            //if (this.elapsedTime > 8.0) {
+            //    this.players[0].script.PlayerShip.simulate = true;
+            //}
         },
 
 

@@ -31,6 +31,7 @@ pc.script.create('PlayerShip', function (context) {
         this.shipModel = null;                                  // player ship model
 
         this.elapsedTime = 0.0;
+
         this.simulate = false;
         this.nextSimulationDelta = 3;
         this.lastSimulation = 0;
@@ -79,16 +80,12 @@ pc.script.create('PlayerShip', function (context) {
 
 
         Spawn: function () {
-	    console.log("Calling PlayerShip spawn function");
-
             if(!this.playerClient)
                 this.playerClient = this.entity.script.PlayerClient;
 
             if (this.playerClient) {
-	    	console.log("Calling client spawn function");
-                this.playerClient.fire('spawn', this.shipId);
-	    	console.log("Done calling client spawn function");
-	    }
+                this.playerClient.fire('spawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
+	        }
         },
 
 

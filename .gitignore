@@ -9,3 +9,8 @@
 /files/assets
 /LocalServer.bat
 /XNASpaceRace.bat
+/_localserver.bat
+/node_modules/express
+/node_modules/socket.io
+/node_modules/socket.io-client
+/node_modules/webrtc.io-client
