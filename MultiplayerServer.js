@@ -10,17 +10,20 @@ if (!pc) {
 		return script;
 	}());
 }
-pc.script.create('MultiplayerServer', function(context) {
-	var MultiplayerServer = function(entity) {
+
+pc.script.create('MultiplayerServer', function (context) {
+
+    var MultiplayerServer = function (entity) {
+
 		maxplayers = 0;
 		thePlayers = [];
 		oldplayers = [];
+
 		this.express = require('express');
 		this.app = this.express();
 		this.http = require('http').Server(this.app);
 		this.io = require('socket.io')(this.http);
 		this.app.use(express.static(__dirname));
-
 
 		this.io.on('connection', function (socket) {
 
@@ -71,8 +74,15 @@ pc.script.create('MultiplayerServer', function(context) {
             });
 
             socket.on('disconnect', function () {
-                if (thePlayers[socket.client.id]) {
-                    io.emit('servermessage', thePlayers[socket.client.id].playernumber + " quit.");
+				if (thePlayers[socket.client.id]) {
+					var response = {
+						playerNumber: thePlayers[socket.client.id].playerNumber,
+						playerId: socket.client.id
+					};
+					io.emit('serverquit', response);
+
+					io.emit('servermessage', thePlayers[socket.client.id].playerNumber + " quit.");
+
                     oldplayers[socket.client.id] = thePlayers[socket.client.id];
                     delete thePlayers[socket.client.id];
                     MultiplayerServer.prototype.reportPlayers();
@@ -101,6 +111,7 @@ pc.script.create('MultiplayerServer', function(context) {
 
 
 	MultiplayerServer.prototype = {
+
 		reportPlayers: function() {
 		    var numPlayers = 0;
 
@@ -111,23 +122,20 @@ pc.script.create('MultiplayerServer', function(context) {
 		},
 
 		clientmessage: function(socket, msg) {
-			io.emit('servermessage', "<"+thePlayers[socket.client.id].playernumber+"> "+msg[0]);
+			io.emit('servermessage', "<"+thePlayers[socket.client.id].playerNumber+"> "+msg[0]);
 		},
 
 		clientspawn: function (socket, arguments) {
-		    console.log('(clientspawn):');
-		    console.log(arguments);
-
-		    var shipId = thePlayers[socket.client.id].shipId = arguments[0];
-		    var position = thePlayers[socket.client.id].position = arguments[1];
-		    var orientation = thePlayers[socket.client.id].orientation = arguments[2];
-
-		    console.log('1by1');
-		    console.log(shipId);
-		    console.log(position);
-		    console.log(orientation);
-
-			io.emit('serverspawn', thePlayers[socket.client.id].playernumber, shipId, position, orientation);
+			
+			var response = {
+				playerId: socket.client.id,
+				playerNumber: thePlayers[socket.client.id].playerNumber,
+				shipId: thePlayers[socket.client.id].shipId = arguments[0],
+				position: thePlayers[socket.client.id].position = arguments[1],
+				orientation: thePlayers[socket.client.id].orientation = arguments[2]
+			};
+			
+			io.emit('serverspawn', response);
 		},
 
 		clientmove: function(socket, position, orientation) {
@@ -156,7 +164,7 @@ pc.script.create('MultiplayerServer', function(context) {
 				thePlayers[socket.client.id].position = [0,0,0];
 				thePlayers[socket.client.id].orientation = orientation;
 			}
-			io.emit('serverupdate', thePlayers[socket.client.id].playernumber, thePlayers[socket.client.id].position, thePlayers[socket.client.id].orientation);
+			io.emit('serverupdate', thePlayers[socket.client.id].playerNumber, thePlayers[socket.client.id].position, thePlayers[socket.client.id].orientation);
 			function close(v1, v2) {
 				return Math.abs(v1 - v2) < 0.01;
 			}
@@ -174,8 +182,8 @@ pc.script.create('MultiplayerServer', function(context) {
 							// reset to beginning
 							thePlayers[player].position = [0,0,0];
 							thePlayers[socket.client.id].score++;
-							io.emit('serverupdate', thePlayers[player].playernumber, thePlayers[player].position, thePlayers[player].orientation);
-							io.emit('serverscore', thePlayers[socket.client.id].playernumber, thePlayers[socket.client.id].score);
+							io.emit('serverupdate', thePlayers[player].playerNumber, thePlayers[player].position, thePlayers[player].orientation);
+							io.emit('serverscore', thePlayers[socket.client.id].playerNumber, thePlayers[socket.client.id].score);
 						}
 					}
 				}
@@ -215,13 +223,18 @@ pc.script.create('MultiplayerServer', function(context) {
 			if (i >= 0) {
 				var id = msg[0].substring(i+1);
 				if (typeof oldplayers[id] !== 'undefined') {
-					thePlayers[socket.client.id] = { playernumber: oldplayers[id].playernumber, id: socket.client.id, score: oldplayers[id].score };
-					socket.emit('servermessage', 'Your previous id was '+id);
-					socket.emit('servermessage', 'Your current id is '+socket.client.id);
-					console.log(thePlayers[socket.client.id]);
-					io.emit('servermessage', thePlayers[socket.client.id].playernumber+" joined.");
+					thePlayers[socket.client.id] = { playerNumber: oldplayers[id].playerNumber, id: socket.client.id, score: oldplayers[id].score };
+					var response = {
+						playerNumber: thePlayers[socket.client.id].playerNumber,
+						playerId: socket.client.id,
+						previousId: id
+					};
+					socket.emit('serverrejoin', response);
+
+					io.emit('servermessage', thePlayers[socket.client.id].playerNumber + " joined.");
+
 					MultiplayerServer.prototype.reportPlayers();
-					socket.emit('servercapability', thePlayers[socket.client.id], thePlayers[socket.client.id].playernumber);
+					socket.emit('servercapability', thePlayers[socket.client.id]);
 				} else {
 					MultiplayerServer.prototype.clientjoin(socket);
 				}
@@ -231,16 +244,19 @@ pc.script.create('MultiplayerServer', function(context) {
 		},
 
 		clientjoin: function(socket) {
-			thePlayers[socket.client.id] = {playernumber: maxplayers, id: socket.client.id, score:0};
-			console.log('(clientjoin):');
-			console.log(thePlayers[socket.client.id]);
-
+			thePlayers[socket.client.id] = {playerNumber: maxplayers, id: socket.client.id, score:0};
 			maxplayers++;
+			
+			var response = {
+				playerNumber: thePlayers[socket.client.id].playerNumber,
+				playerId: socket.client.id
+			};
+			socket.emit('serverjoin', response);
 
-			io.emit('servermessage', thePlayers[socket.client.id].playernumber+" joined.");
+			io.emit('servermessage', thePlayers[socket.client.id].playerNumber + " joined.");
 			
 			MultiplayerServer.prototype.reportPlayers();
-		    socket.emit('servercapability', thePlayers[socket.client.id], thePlayers[socket.client.id].playernumber);
+		    socket.emit('servercapability', thePlayers[socket.client.id]);
 		}
 	};
 

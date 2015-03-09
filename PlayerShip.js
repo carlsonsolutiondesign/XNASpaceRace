@@ -4,7 +4,9 @@ pc.script.create('PlayerShip', function (context) {
     var PlayerShip = function (entity) {
         this.entity = entity;
 
-        this.playerClient = null;
+		this.playerClient = null;
+		
+		this.playerId = null;
         this.index = 0;
         this.shipId = null;
 
@@ -42,7 +44,6 @@ pc.script.create('PlayerShip', function (context) {
 
         // Called once after all resources are loaded and before the first update
         initialize: function () {
-            this.playerClient = this.entity.script.PlayerClient;
         },
 
 
@@ -80,9 +81,6 @@ pc.script.create('PlayerShip', function (context) {
 
 
         Spawn: function () {
-            if(!this.playerClient)
-                this.playerClient = this.entity.script.PlayerClient;
-
             if (this.playerClient) {
                 this.playerClient.fire('spawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 	        }

@@ -47,7 +47,7 @@ pc.script.create('CameraManager', function (context) {
         
         this.entity = entity;
         this.target = null;
-        
+		
         this.cameraIndex = 1;
         this.cameraList = new Array({name: "SceneCamera", isMovable: false}, {name: "Ship.01.Camera", isMovable: true}, {name: "Ship.02.Camera", isMovable: true});
     };
@@ -69,7 +69,10 @@ pc.script.create('CameraManager', function (context) {
             this.camera = context.root.findByName(this.cameraName);
             
             this.cameraIndex = this.findCameraByName(this.startingCameraName);
-            this.setCamera(this.cameraList[this.cameraIndex].name);
+			this.setCamera(this.cameraList[this.cameraIndex].name);
+			
+			// temporary override until the online project can be updated
+			this.lockCamera = true;
         },
 
 

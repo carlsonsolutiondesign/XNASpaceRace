@@ -92,14 +92,15 @@ pc.script.create('GameManager', function (context) {
         this.projectileManager = null;
         this.particleManager = null;
         this.powerupManager = null;
-        this.soundManager = null;
+		this.soundManager = null;
+		this.playerClient = null;
 
         this.gameMode = null;
         this.currentLevel = null;
 
         this.players = [];
         this.invertYAxis = 0;
-
+		
         this.realCrosshairTexture = null;
         this.realScoreTexture = null;
         this.realMissileTexture = null;
@@ -237,20 +238,88 @@ pc.script.create('GameManager', function (context) {
             this.projectileManager = this.root.script.ProjectileManager;
             this.particleManager = this.root.script.ParticleManager;
             this.powerupManager = this.root.script.PowerupManager;
-            this.soundManager = this.root.script.SoundManager;
+			this.soundManager = this.root.script.SoundManager;
+			this.playerClient = this.root.script.PlayerClient;
 
-            this.currentLevel = 0; //window.GameManager.Levels.RedSpace;
+            this.currentLevel = 0;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
-            this.players = [this.AddPlayer('player1', 0), this.AddPlayer('player2', 1)];
+            this.players = [this.AddPlayer('player1', 0, 0, true), this.AddPlayer('player2', 1, 0, 0, true)];
 
             this.counter = 0;
 
-            this.screenManager.on('LevelLoaded', this.LevelLoaded, this);
+			this.screenManager.on('LevelLoaded', this.LevelLoaded, this);
+
+			this.on('PlayerJoined', this.PlayerJoined, this);
+			this.on('PlayerRejoined', this.PlayerRejoined, this);
+			this.on('PlayerQuit', this.PlayerQuit, this);
+			this.on('PlayerSpawned', this.PlayerSpawned, this);
         },
         
-        
-        AddPlayer: function (name, index) {
+		
+		PlayerJoined: function (msg) {
+			console.log('GameManager.PlayerJoined()');
+			// the playerId is for the local player to save a copy
+			this.players[0].script.PlayerShip.playerId = msg.playerId;
+		},
+		
+
+		PlayerRejoined: function (msg) {
+			console.log('GameManager.PlayerRejoined()');
+			// the playerId is for the local player to save a copy
+			this.players[0].script.PlayerShip.playerId = msg.playerId;
+		},		
+		
+		
+		PlayerQuit: function (msg) {
+			console.log('GameManager.PlayerQuit()');
+			// make sure that the playerId is not for the local player
+			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
+				return;
+			
+			// otherwise remove network player if found in list
+			for (var i = 2; i < this.players.length; i++) {
+				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
+					this.players.splice(i, 1);
+					return;
+				}
+			}
+		},		
+		
+		
+		PlayerSpawned: function (msg) {
+			console.log('GameManager.PlayerSpawned()');
+			// make sure that the playerId is not for the local player
+			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
+				return;
+
+			// otherwise add a network player if needed, and spawn the player
+			for (var i = 2; i < this.players.length; i++) {
+				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
+					this.players[i].script.PlayerShip.Spawn();
+					return;
+				}
+			}
+
+			var idx = this.players.length;
+			this.players[idx] = this.AddPlayer('networkPlayer', idx, msg.playerId, false);
+			this.players[idx].script.PlayerShip.shipId = msg.shipId;
+
+			//
+			// Temporary code to find the first spawn point, and update the model
+			//
+			var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
+			if (playerSpawnPoint) {
+				var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
+				context.assets.load(asset).then(function (resources) {
+					//playerSpawnPoint.model.model = resources[0];
+					this.players[idx].script.PlayerShip.shipModel = resources[0];
+				}.bind(this));
+			}
+		},
+		
+
+		AddPlayer: function (name, index, playerId, localPlayer) {
 
             var player = new pc.Entity(context);
             player.setName(name);
@@ -259,12 +328,15 @@ pc.script.create('GameManager', function (context) {
             {
                 scripts:
                 [
-                    { url: 'PlayerShip.js', name: 'PlayerShip' },
-                    { url: 'PlayerClient.js', name: 'PlayerClient' },
+                    { url: 'PlayerShip.js', name: 'PlayerShip' }
                 ]
             });
 
-            player.script.PlayerShip.index = index;
+			if(localPlayer)
+				player.script.PlayerShip.playerClient = this.playerClient;
+
+			player.script.PlayerShip.index = index;
+			player.script.PlayerShip.playerId = playerId
             player.script.PlayerShip.shipId = 0;
 
             this.root.addChild(player);
@@ -346,14 +418,16 @@ pc.script.create('GameManager', function (context) {
                 this.realEnergyTexture = resources[3];
                 this.realHUDBarsTexture = resources[4];
             }.bind(this));
-
-            // Temporary code to find the first spawn point, and update the model
+			
+			//
+			// Temporary code to find the first spawn point, and update the model
+			//
             var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
             if (playerSpawnPoint) {
                 var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
                 context.assets.load(asset).then(function (resources){
-                    playerSpawnPoint.model.model = resources[0];
-                    this.players[0].script.PlayerShip.shipModel = playerSpawnPoint;
+                    //playerSpawnPoint.model.model = resources[0];
+                    this.players[0].script.PlayerShip.shipModel = resources[0];
                 }.bind(this));
             }
         },
