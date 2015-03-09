@@ -9,8 +9,10 @@ pc.script.create('Collider', function (context) {
     Collider.prototype = {
         
         // Called once after all resources are loaded and before the first update
-        initialize: function () {
-            this.entity.collision.on('collisionstart', this.onCollisionStart, this);
+		initialize: function () {
+			if (this.entity) {
+				this.entity.collision.on('collisionstart', this.onCollisionStart, this);
+			}
         },
 
 
