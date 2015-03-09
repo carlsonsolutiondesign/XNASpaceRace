@@ -10,7 +10,7 @@ pc.script.create('Collider', function (context) {
         
         // Called once after all resources are loaded and before the first update
 		initialize: function () {
-			if (this.entity) {
+			if (this.entity && this.entity.collision) {
 				this.entity.collision.on('collisionstart', this.onCollisionStart, this);
 			}
         },
