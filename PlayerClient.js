@@ -27,13 +27,13 @@ pc.script.create('PlayerClient', function (context) {
 			this.host = context.root.findByName('host') || this.host;
 			
 			// temporary test for Azure deployment
-			//this.host = "xnaspacerace.azurewebsites.net";
-			this.host = document.URL;
+		    //this.host = "xnaspacerace.azurewebsites.net";
+			var protocol = location.protocol;
+			this.host = location.hostname;
 			this.port = 1337;
 
 			if (typeof io !== 'undefined') {
-				//this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
-				this.socket = io(this.host + ":" + this.port, { hostname: this.host, host: this.host, port: this.port });
+				this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
             }
 			
 			if (this.socket) {
