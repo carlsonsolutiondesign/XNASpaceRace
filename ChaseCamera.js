@@ -44,7 +44,9 @@ pc.script.create('ChaseCamera', function (context) {
         initialize: function () {
             this.camera = context.root.findByName(this.cameraName);
             
-            this.entity.collision.on('collisionstart', this.OnCollisionStart, this);
+            if (this.entity && this.entity.collision) {
+                this.entity.collision.on('collisionstart', this.OnCollisionStart, this);
+            }
         },
 
 
