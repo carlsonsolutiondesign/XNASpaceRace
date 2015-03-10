@@ -3,7 +3,7 @@ pc.script.attribute('host', 'string', 'localhost',
 	displayName: "Remote Host"
 });
 
-pc.script.attribute('port', 'number', 8088,
+pc.script.attribute('port', 'number', 1337,
 {
 	displayName: "Remote Port"
 });
@@ -14,7 +14,7 @@ pc.script.create('PlayerClient', function (context) {
 		this.entity = entity;
 		
 		this.host = "localhost";
-		this.port = 8088;
+		this.port = 1337;
 	};
 	
 	var players = [];
