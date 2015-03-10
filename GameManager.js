@@ -254,6 +254,7 @@ pc.script.create('GameManager', function (context) {
 			this.on('PlayerRejoined', this.PlayerRejoined, this);
 			this.on('PlayerQuit', this.PlayerQuit, this);
 			this.on('PlayerSpawned', this.PlayerSpawned, this);
+			this.on('PlayerUpdate', this.PlayerUpdate, this);
         },
         
 		
@@ -305,35 +306,52 @@ pc.script.create('GameManager', function (context) {
 			this.players[idx] = this.AddPlayer('networkPlayer', idx, msg.playerId, false);
 			this.players[idx].script.PlayerShip.shipId = msg.shipId;
 
-			//
-			// Temporary code to find the first spawn point, and update the model
-			//
-			var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
-			if (playerSpawnPoint) {
-				var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
-				context.assets.load(asset).then(function (resources) {
-					//playerSpawnPoint.model.model = resources[0];
-					this.players[idx].script.PlayerShip.shipModel = resources[0];
-				}.bind(this));
+			var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
+			context.assets.load(asset).then(function (resources) {
+				this.players[idx].script.PlayerShip.shipModel = resources[0];
+			}.bind(this));
+		},
+		
+		
+		PlayerUpdate: function (msg) {
+			console.log('GameManager.PlayerUpdate()');
+			// make sure that the playerId is not for the local player
+			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
+				return;
+			
+			// otherwise update the player
+			for (var i = 2; i < this.players.length; i++) {
+				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
+					this.players[i].script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
+					return;
+				}
 			}
 		},
 		
-
+		
 		AddPlayer: function (name, index, playerId, localPlayer) {
 
             var player = new pc.Entity(context);
             player.setName(name);
 
-            context.systems.script.addComponent(player,
+			player.addComponent('model', { type: 'asset' });
+
+			context.systems.script.addComponent(player,
             {
                 scripts:
                 [
-                    { url: 'PlayerShip.js', name: 'PlayerShip' }
+					{ url: 'PlayerShip.js', name: 'PlayerShip' },
+					{ url: 'Collider.js', name: 'Collider' }
                 ]
             });
 
-			if(localPlayer)
+			if (localPlayer) {
 				player.script.PlayerShip.playerClient = this.playerClient;
+
+				var cameraOffset = new pc.Entity(context);
+				cameraOffset.name = 'CameraOffset';
+				player.addChild(cameraOffset);
+			}
 
 			player.script.PlayerShip.index = index;
 			player.script.PlayerShip.playerId = playerId
@@ -375,6 +393,152 @@ pc.script.create('GameManager', function (context) {
         },
 
 
+		ProcessInput: function (dt, inputManager) {
+			
+			if (!inputManager)
+				return;
+		},
+		
+		
+		Update: function (dt) {
+			
+			this.elapsedTime += dt;
+
+			// update local players
+			switch (this.gameMode) {
+				case window.GameManager.GameMode.SinglePlayer:
+					this.players[0].script.PlayerShip.Update(dt);
+					break;
+
+				case window.GameManager.GameMode.MultiPlayer:
+					this.players[0].script.PlayerShip.Update(dt);
+					this.players[1].script.PlayerShip.Update(dt);
+					break;
+
+				default:
+					this.players[0].script.PlayerShip.Update(dt);
+					break;
+			}
+			
+			// update networked players
+			for (var i = 2; i < this.players.length; i++) {
+				this.players[i].script.PlayerShip.Update(dt);
+			}
+
+			// uncomment the below to run simulation on the first player
+            //if (this.elapsedTime > 8.0) {
+            //    this.players[0].script.PlayerShip.simulate = true;
+            //}
+		},
+		
+		
+		Draw3D: function (gd) {
+			
+			if (!gd)
+				return;
+		},
+		
+		
+		DrawHUD: function (gd, viewRect, bars, barsLeft, barsWidth, crosshair) {
+			
+			if (!gd)
+				return;
+			
+			var white = new pc.Vec4().copy(pc.Vec4.ONE);
+			var r = new pc.Vec4();
+			
+			// draw crosshair if requested
+			if (crosshair && this.realCrosshairTexture) {
+				r.x = viewRect.x + (viewRect.z - this.realCrosshairTexture.width) / 2.0;
+				r.y = viewRect.y + (viewRect.w - this.realCrosshairTexture.height) / 2.0;
+				r.z = this.realCrosshairTexture.width;
+				r.w = this.realCrosshairTexture.height;
+				
+				this.screenManager.DrawTexture(gd, this.realCrosshairTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+			}
+			
+			// draw the score HUD
+			if (this.realScoreTexture) {
+				r.x = viewRect.x + (viewRect.z - this.realScoreTexture.width) / 2.0;
+				r.y = viewRect.y;
+				r.z = this.realScoreTexture.width;
+				r.w = this.realScoreTexture.height;
+				
+				this.screenManager.DrawTexture(gd, this.realScoreTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+			}
+			
+			// draw the missile HUD
+			if (this.realMissileTexture) {
+				r.x = viewRect.x + viewRect.z - this.realMissileTexture.width;
+				r.y = viewRect.y + viewRect.w - this.realMissileTexture.height;
+				r.z = this.realMissileTexture.width;
+				r.w = this.realMissileTexture.height;
+				
+				this.screenManager.DrawTexture(gd, this.realMissileTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+			}
+			
+			// draw the energy HUB
+			if (this.realEnergyTexture) {
+				r.x = viewRect.x;
+				r.y = viewRect.y + viewRect.w - this.realEnergyTexture.height;
+				r.z = this.realEnergyTexture.width;
+				r.w = this.realEnergyTexture.height;
+				
+				this.screenManager.DrawTexture(gd, this.realEnergyTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
+			}
+			
+			// draw bars
+			if (this.realHUDBarsTexture) {
+				
+				var red = new pc.Color(1.0, 0.0, 0.0, 1.0);
+				var green = new pc.Color(0.0, 1.0, 0.0, 1.0);
+				var blue = new pc.Color(0.0, 0.0, 1.0, 1.0);
+				
+				var s = new pc.Vec4(0.0, 0.0, this.realHUDBarsTexture.width, this.realHUDBarsTexture.height);
+				
+				// draw energy bar
+				s.z = barsLeft + (bars.x * barsWidth);
+				this.screenManager.DrawClippedTexture(gd, this.realHUDBarsTexture, r, s, red, ScreenManager.BlendMode.AdditiveBlending);
+				
+				// draw the shield bar
+				s.z = barsLeft + (bars.y * barsWidth);
+				this.screenManager.DrawClippedTexture(gd, this.realHUDBarsTexture, r, s, green, ScreenManager.BlendMode.AdditiveBlending);
+				
+				// draw the boost bar
+				s.z = barsLeft + (bars.z * barsWidth);
+				this.screenManager.DrawClippedTexture(gd, this.realHUDBarsTexture, r, s, blue, ScreenManager.BlendMode.AdditiveBlending);
+			}
+		},
+		
+		
+		Draw2D: function (gd) {
+			
+			if (!gd)
+				return;
+			
+			var rect = new pc.Vec4();
+			rect.z = gd.width;
+			rect.w = gd.height;
+			
+			if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
+				if (this.players[0].script.PlayerShip.IsAlive()) {
+					// draw HUB
+					this.DrawHUD(gd, rect, this.players[0].script.PlayerShip.Bars(), 70, 120, !this.players[0].script.PlayerShip.camera3DPerson);
+
+                    // draw missile count
+				}
+				
+				// draw damage indicator
+				var color = this.players[0].script.PlayerShip.DamageColor();
+				if (color.a > 0) {
+					this.screenManager.FadeScene(gd, color);
+				}
+			} else {
+
+			}
+		},
+		
+		
         LoadContent: function () {
             var gd = context.graphicsDevice;
 
@@ -419,17 +583,14 @@ pc.script.create('GameManager', function (context) {
                 this.realHUDBarsTexture = resources[4];
             }.bind(this));
 			
-			//
-			// Temporary code to find the first spawn point, and update the model
-			//
-            var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
-            if (playerSpawnPoint) {
-                var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
-                context.assets.load(asset).then(function (resources){
-                    //playerSpawnPoint.model.model = resources[0];
-                    this.players[0].script.PlayerShip.shipModel = resources[0];
-                }.bind(this));
-            }
+			var mgr = context.root.findByName('Camera');
+			if (mgr)
+				this.players[0].script.PlayerShip.cameraManager = mgr.script.CameraManager;
+
+            var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
+            context.assets.load(asset).then(function (resources){
+                this.players[0].script.PlayerShip.shipModel = resources[0];
+            }.bind(this));
         },
 
 
@@ -958,132 +1119,6 @@ pc.script.create('GameManager', function (context) {
 
             this.fogColor = new Float32Array(3);
             this.ambientColor = new Float32Array(3);
-        },
-
-
-        ProcessInput: function (dt, inputManager) {
-
-            if (!inputManager)
-                return;
-        },
-
-
-        Update: function (dt) {
-
-            this.elapsedTime += dt;
-
-            this.players[0].script.PlayerShip.Update(dt);
-
-            //if (this.elapsedTime > 8.0) {
-            //    this.players[0].script.PlayerShip.simulate = true;
-            //}
-        },
-
-
-        Draw3D: function (gd) {
-
-            if (!gd)
-                return;
-        },
-
-
-        DrawHUD: function (gd, viewRect, bars, barsLeft, barsWidth, crosshair) {
-
-            if (!gd)
-                return;
-
-            var white = new pc.Vec4().copy(pc.Vec4.ONE);
-            var r = new pc.Vec4();
-
-            // draw crosshair if requested
-            if (crosshair && this.realCrosshairTexture) {
-                r.x = viewRect.x + (viewRect.z - this.realCrosshairTexture.width) / 2.0;
-                r.y = viewRect.y + (viewRect.w - this.realCrosshairTexture.height) / 2.0;
-                r.z = this.realCrosshairTexture.width;
-                r.w = this.realCrosshairTexture.height;
-
-                this.screenManager.DrawTexture(gd, this.realCrosshairTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
-            }
-
-            // draw the score HUD
-            if (this.realScoreTexture) {
-                r.x = viewRect.x + (viewRect.z - this.realScoreTexture.width) / 2.0;
-                r.y = viewRect.y;
-                r.z = this.realScoreTexture.width;
-                r.w = this.realScoreTexture.height;
-
-                this.screenManager.DrawTexture(gd, this.realScoreTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
-            }
-
-            // draw the missile HUD
-            if (this.realMissileTexture) {
-                r.x = viewRect.x + viewRect.z - this.realMissileTexture.width;
-                r.y = viewRect.y + viewRect.w - this.realMissileTexture.height;
-                r.z = this.realMissileTexture.width;
-                r.w = this.realMissileTexture.height;
-
-                this.screenManager.DrawTexture(gd, this.realMissileTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
-            }
-
-            // draw the energy HUB
-            if (this.realEnergyTexture) {
-                r.x = viewRect.x;
-                r.y = viewRect.y + viewRect.w - this.realEnergyTexture.height;
-                r.z = this.realEnergyTexture.width;
-                r.w = this.realEnergyTexture.height;
-
-                this.screenManager.DrawTexture(gd, this.realEnergyTexture, r, white, ScreenManager.BlendMode.AlphaBlending);
-            }
-
-            // draw bars
-            if (this.realHUDBarsTexture) {
-
-                var red = new pc.Color(1.0, 0.0, 0.0, 1.0);
-                var green = new pc.Color(0.0, 1.0, 0.0, 1.0);
-                var blue = new pc.Color(0.0, 0.0, 1.0, 1.0);
-
-                var s = new pc.Vec4(0.0, 0.0, this.realHUDBarsTexture.width, this.realHUDBarsTexture.height);
-
-                // draw energy bar
-                s.z = barsLeft + (bars.x * barsWidth);
-                this.screenManager.DrawClippedTexture(gd, this.realHUDBarsTexture, r, s, red, ScreenManager.BlendMode.AdditiveBlending);
-
-                // draw the shield bar
-                s.z = barsLeft + (bars.y * barsWidth);
-                this.screenManager.DrawClippedTexture(gd, this.realHUDBarsTexture, r, s, green, ScreenManager.BlendMode.AdditiveBlending);
-
-                // draw the boost bar
-                s.z = barsLeft + (bars.z * barsWidth);
-                this.screenManager.DrawClippedTexture(gd, this.realHUDBarsTexture, r, s, blue, ScreenManager.BlendMode.AdditiveBlending);
-            }
-        },
-
-
-        Draw2D: function (gd) {
-
-            if (!gd)
-                return;
-
-            var rect = new pc.Vec4();
-            rect.z = gd.width;
-            rect.w = gd.height;
-
-            if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
-                if (this.players[0].script.PlayerShip.IsAlive()) {
-                    // draw HUB
-                    this.DrawHUD(gd, rect, this.players[0].script.PlayerShip.Bars(), 70, 120, !this.players[0].script.PlayerShip.camera3DPerson);
-
-                    // draw missile count
-                }
-
-                // draw damage indicator
-                var color = this.players[0].script.PlayerShip.DamageColor();
-                if (color.a > 0) {
-                    this.screenManager.FadeScene(gd, color);
-                }
-            } else {
-
-            }
         },
 
 

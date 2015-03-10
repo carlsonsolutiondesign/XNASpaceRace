@@ -31,15 +31,16 @@ pc.script.create('PlayerClient', function (context) {
 			}
 			
 			if (this.socket) {
-				this.socket.on('servermessage', this.servermessage, this);
-				this.socket.on('serverjoin', this.serverjoin, this);
-				this.socket.on('serverrejoin', this.serverrejoin, this);
-				this.socket.on('serverquit', this.serverquit, this);
-				this.socket.on('serverspawn', this.serverspawn, this, arguments);
-				this.socket.on('serverupdate', this.serverupdate, this);
-				this.socket.on('serverscore', this.serverscore, this);
-				this.socket.on('servercapability', this.servercapability, this);
-				this.socket.emit('clientrejoin', location.href);
+				this.socket.on('ServerMessage', this.ServerMessage, this);
+				this.socket.on('ServerJoin', this.ServerJoin, this);
+				this.socket.on('ServerRejoin', this.ServerRejoin, this);
+				this.socket.on('ServerQuit', this.ServerQuit, this);
+				this.socket.on('ServerSpawn', this.ServerSpawn, this);
+				this.socket.on('ServerUpdate', this.ServerUpdate, this);
+				this.socket.on('ServerScore', this.ServerScore, this);
+				this.socket.on('ServerCapability', this.ServerCapability, this);
+
+				this.socket.emit('ClientRejoin', location.href);
 			} else {
 				console.log("Failed to connect to " + this.host + ":" + this.port);
 			}
@@ -47,16 +48,17 @@ pc.script.create('PlayerClient', function (context) {
 			var root = context.root.getChildren()[0];
 			gameManager = root.script.GameManager;
 			
-			this.on('spawn', this.spawn, this);
+			this.on('ClientSpawn', this.ClientSpawn, this);
+			this.on('ClientUpdate', this.ClientUpdate, this);
 		},
 		
-		servermessage: function (packet) {
+		ServerMessage: function (packet) {
 			console.log(packet);
 		},
 		
 		// serverjoin is fired when the player has joined a game, 
 		// and the player's id is returned for further processing
-		serverjoin: function (packet) {
+		ServerJoin: function (packet) {
 			console.log('serverjoin');
 			
 			if (gameManager) {
@@ -68,7 +70,7 @@ pc.script.create('PlayerClient', function (context) {
 			}
 		},
 		
-		serverrejoin: function (packet) {
+		ServerRejoin: function (packet) {
 			console.log('serverrejoin');
 			
 			if (gameManager) {
@@ -81,7 +83,7 @@ pc.script.create('PlayerClient', function (context) {
 			}
 		},
 		
-		serverquit: function (packet) {
+		ServerQuit: function (packet) {
 			console.log('serverquit');
 			
 			if (gameManager) {
@@ -93,7 +95,7 @@ pc.script.create('PlayerClient', function (context) {
 			}
 		},
 		
-		serverspawn: function (packet) {
+		ServerSpawn: function (packet) {
 			console.log('serverspawn:');
 			
 			if (gameManager) {
@@ -114,19 +116,26 @@ pc.script.create('PlayerClient', function (context) {
 			}
 		},
 		
-		serverupdate: function (packet) {
-			// $('#messages').append($('<li>').text(playerNumber+" at "+position+" turns "+orientation));
-			if (typeof players[packet.playerNumber] === 'undefined') {
-				console.log("Player needs to spawn first before sending updates");
-			} else {
+		ServerUpdate: function (packet) {
+			console.log('serverupdate');
+
+			if (gameManager) {
+				var msg = {
+					playerId: packet.playerId,
+					playerNumber: packet.playerNumber,
+					shipId: packet.shipId,
+					position: new pc.Vec3(packet.position.data[0], packet.position.data[1], packet.position.data[2]),
+					orientation: new pc.Vec3(packet.orientation.data[0], packet.orientation.data[1], packet.orientation.data[2])
+				};
+				gameManager.fire('PlayerUpdate', msg);
 			}
 		},
-		
-		serverscore: function (packet) {
+
+		ServerScore: function (packet) {
 			console.log(packet.playerNumber + " " + packet.score);
 		},
 		
-		servercapability: function () {
+		ServerCapability: function () {
 			if (history.pushState) {
 				var href = location.href;
 				var i = href.indexOf("#");
@@ -137,23 +146,23 @@ pc.script.create('PlayerClient', function (context) {
 			}
 		},
 		
-		spawn: function (shipId, position, orientation) {
+		ClientSpawn: function (shipId, position, orientation) {
 			if (this.socket) {
 				console.log('Spawning: shipId: ' + shipId 
                           + '  position: (' + position.x.toFixed(3) + ', ' + position.y.toFixed(3) + ', ' + position.z.toFixed(3) + ')' 
                           + '  orientation: (' + orientation.x.toFixed(3) + ', ' + orientation.y.toFixed(3) + ', ' + orientation.z.toFixed(3) + ')');
 				
-				this.socket.emit('clientspawn', shipId, position, orientation);
+				this.socket.emit('ClientSpawn', shipId, position, orientation);
 			}
 		},
 		
-		move: function (position, orientation) {
+		ClientUpdate: function (shipId, position, orientation) {
 			if (this.socket) {
-				this.socket.emit('clientmove', position, orientation);
+				this.socket.emit('ClientUpdate', shipId, position, orientation);
 			}
 		},
 		
-		delta: function (deltaposition, deltaorientation) {
+		ClientDelta: function (deltaposition, deltaorientation) {
 			this.position[0] += deltaposition[0];
 			this.position[1] += deltaposition[1];
 			this.position[2] += deltaposition[2];

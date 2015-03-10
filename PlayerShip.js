@@ -3,9 +3,12 @@ pc.script.create('PlayerShip', function (context) {
     // Creates a new PlayerShip instance
     var PlayerShip = function (entity) {
         this.entity = entity;
-
+		this.cameraManager = null;
 		this.playerClient = null;
-		
+
+		this.moveDT = 0.750;
+		this.nextMove = this.moveDT;
+
 		this.playerId = null;
         this.index = 0;
         this.shipId = null;
@@ -76,18 +79,52 @@ pc.script.create('PlayerShip', function (context) {
 
             if (this.simulate) {
                 this.Simulate();
-            }
+			}
+
+			if (this.playerClient) {
+				this.nextMove -= dt;
+				if (this.nextMove <= 0.0) {
+					this.nextMove = this.moveDT;
+					this.playerClient.fire('ClientUpdate', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
+				}
+			}
         },
 
 
-        Spawn: function () {
-            if (this.playerClient) {
-                this.playerClient.fire('spawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
+		Spawn: function () {
+
+			var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
+			if (playerSpawnPoint) {
+				this.entity.model.model = this.shipModel;
+				this.entity.setPosition(playerSpawnPoint.getPosition());
+				this.entity.setEulerAngles(playerSpawnPoint.getEulerAngles());
+			}
+
+			if (this.playerClient) {
+				this.playerClient.fire('ClientSpawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
+			}
+			
+			if(this.cameraManager) {
+				var cameraOffset = context.root.findByName('Ship.01.Camera');
+				if (cameraOffset) {
+					var camera = this.entity.findByName('CameraOffset');
+					if (camera) {
+						camera.setPosition(cameraOffset.getPosition());
+						camera.setEulerAngles(cameraOffset.getEulerAngles());
+						this.cameraManager.setCamera(camera.name);
+					}
+				}
 	        }
         },
 
+		
+		SvrUpdate: function (position, orientation) {
+			this.entity.setPosition(position);
+			this.entity.setEulerAngles(orientation);
+		},
 
-        Simulate: function () {
+		
+		Simulate: function () {
 
             // temporary for testing purposes
             var t = Math.floor(this.elapsedTime);
