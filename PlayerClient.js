@@ -33,7 +33,8 @@ pc.script.create('PlayerClient', function (context) {
 			this.port = 1337;
 
 			if (typeof io !== 'undefined') {
-				this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
+				//this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
+				this.socket = io("http://" + this.host, { hostname: this.host, host: this.host, port: this.port });
             }
 			
 			if (this.socket) {
