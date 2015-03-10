@@ -11,7 +11,7 @@ pc.script.create('PlayerClient', function (context) {
 		
 		initialize: function () {
 			if (typeof io !== 'undefined') {
-				this.socket = io("http://jwcspacerace.azurewebsites.net:1337");
+				this.socket = io();
                         }
 			
 			if (this.socket) {
