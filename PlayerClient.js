@@ -26,6 +26,10 @@ pc.script.create('PlayerClient', function (context) {
 			this.port = context.root.findByName('port') || this.port;
 			this.host = context.root.findByName('host') || this.host;
 			
+			// temporary test for Azure deployment
+			this.host = "xnaspacerace.azurewebsites.net";
+			this.port = 1337;
+
 			if (typeof io !== 'undefined') {
 				this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
 			}
