@@ -90,8 +90,9 @@ pc.script.create('MultiplayerServer', function (context) {
             });
 		});
 
-		var defaultPort = 8088;
-
+		// http://azure.microsoft.com/en-us/documentation/articles/web-sites-nodejs-develop-deploy-mac/
+		//var defaultPort = 8088;
+		var defaultPort = 1337;
 		module.exports = this.http.listen(process.env.PORT || defaultPort);
 
 		console.log('express server started on port %s', process.env.PORT || defaultPort);
