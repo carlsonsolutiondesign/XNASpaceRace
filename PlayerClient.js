@@ -1,71 +1,175 @@
-/*
-	Don't forget to put this above the data.js script in index.html
-    <script language="Javascript" src="http://cdn.socket.io/socket.io-1.2.1.js"></script>
-*/
-pc.script.create('PlayerClient', function(context) {
+pc.script.attribute('host', 'string', 'localhost',
+{
+	displayName: "Remote Host"
+});
+
+pc.script.attribute('port', 'number', 8088,
+{
+	displayName: "Remote Port"
+});
+
+pc.script.create('PlayerClient', function (context) {
+	
 	var PlayerClient = function (entity) {
-	    var socket = io();
-	    // var socket = entity;
 		this.entity = entity;
-		this.socket = socket;
-		this.position = [0,0,0,0]; // x, y, z, time
-		this.orientation = [0,0,0]; // x, y, z
+		
+		this.host = "localhost";
+		this.port = 8088;
 	};
-
+	
+	var players = [];
+	var gameManager = null;
+	
 	PlayerClient.prototype = {
-	    initialize: function () {
-	        this.socket.on('servermessage', this.servermessage, this);
-	        this.socket.on('serverupdate', this.serverupdate, this);
-	        this.socket.on('serverscore', this.serverscore, this);
-	        this.socket.on('servercapability', this.servercapability, this);
-	        this.socket.emit('clientrejoin', location.href);
+		
+		initialize: function () {
+			this.port = context.root.findByName('port') || this.port;
+			this.host = context.root.findByName('host') || this.host;
+			
+			// temporary test for Azure deployment
+		    //this.host = "xnaspacerace.azurewebsites.net";
+			var protocol = location.protocol;
+			this.host = location.hostname;
+			this.port = 1337;
 
-	        this.on('serverspawn', this.serverspawn, this);
-	    },
+			if (typeof io !== 'undefined') {
+				//this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
+				this.socket = io("http://" + this.host, { hostname: this.host, host: this.host, port: this.port });
+            }
+			
+			if (this.socket) {
+				this.socket.on('ServerMessage', this.ServerMessage, this);
+				this.socket.on('ServerJoin', this.ServerJoin, this);
+				this.socket.on('ServerRejoin', this.ServerRejoin, this);
+				this.socket.on('ServerQuit', this.ServerQuit, this);
+				this.socket.on('ServerSpawn', this.ServerSpawn, this);
+				this.socket.on('ServerUpdate', this.ServerUpdate, this);
+				this.socket.on('ServerScore', this.ServerScore, this);
+				this.socket.on('ServerCapability', this.ServerCapability, this);
 
-		servermessage: function(msg) {
-			console.log(msg);
+				this.socket.emit('ClientRejoin', location.href);
+			} else {
+				console.log("Failed to connect to " + this.host + ":" + this.port);
+			}
+			
+			var root = context.root.getChildren()[0];
+			gameManager = root.script.GameManager;
+			
+			this.on('ClientSpawn', this.ClientSpawn, this);
+			this.on('ClientUpdate', this.ClientUpdate, this);
+		},
+		
+		ServerMessage: function (packet) {
+			console.log(packet);
+		},
+		
+		// serverjoin is fired when the player has joined a game, 
+		// and the player's id is returned for further processing
+		ServerJoin: function (packet) {
+			console.log('serverjoin');
+			
+			if (gameManager) {
+				var msg = {
+					playerId: packet.playerId
+				};
+				gameManager.fire('PlayerJoined', msg);
+				console.log('playerId: ' + msg.playerId);
+			}
+		},
+		
+		ServerRejoin: function (packet) {
+			console.log('serverrejoin');
+			
+			if (gameManager) {
+				var msg = {
+					playerId: packet.playerId,
+					previousId: packet.previousId
+				};
+				gameManager.fire('PlayerRejoined', msg);
+				console.log('playerId: ' + msg.playerId);
+			}
+		},
+		
+		ServerQuit: function (packet) {
+			console.log('serverquit');
+			
+			if (gameManager) {
+				var msg = {
+					playerId: packet.playerId
+				};
+				gameManager.fire('PlayerQuit', msg);
+				console.log('playerId: ' + playerId);
+			}
+		},
+		
+		ServerSpawn: function (packet) {
+			console.log('serverspawn:');
+			
+			if (gameManager) {
+				var msg = {
+					playerId: packet.playerId,
+					playerNumber: packet.playerNumber,
+					shipId: packet.shipId,
+					position: new pc.Vec3(packet.position.data[0], packet.position.data[1], packet.position.data[2]),
+					orientation: new pc.Vec3(packet.orientation.data[0], packet.orientation.data[1], packet.orientation.data[2])
+				};
+				gameManager.fire('PlayerSpawned', msg);
+			
+				console.log('Spawning: playerId: ' + msg.playerId 
+					      + ' playerNumber: ' + msg.playerNumber 
+						  + ' shipId: ' + msg.shipId 
+                          + ' position: (' + msg.position.x.toFixed(3) + ', ' + msg.position.y.toFixed(3) + ', ' + msg.position.z.toFixed(3) + ')' 
+                          + ' orientation: (' + msg.orientation.x.toFixed(3) + ', ' + msg.orientation.y.toFixed(3) + ', ' + msg.orientation.z.toFixed(3) + ')');
+			}
+		},
+		
+		ServerUpdate: function (packet) {
+			console.log('serverupdate');
+
+			if (gameManager) {
+				var msg = {
+					playerId: packet.playerId,
+					playerNumber: packet.playerNumber,
+					shipId: packet.shipId,
+					position: new pc.Vec3(packet.position.data[0], packet.position.data[1], packet.position.data[2]),
+					orientation: new pc.Vec3(packet.orientation.data[0], packet.orientation.data[1], packet.orientation.data[2])
+				};
+				gameManager.fire('PlayerUpdate', msg);
+			}
 		},
 
-		serverspawn: function (playernumber, position, orientation) {
-		    console.log('Respawn: playerId: ' + playernumber
-                      + '  position: (' + position.x.toFixed(3) + ', ' + position.y.toFixed(3) + ', ' + position.z.toFixed(3) + ')'
-                      + '  orientation: (' + orientation.x.toFixed(3) + ', ' + orientation.y.toFixed(3) + ', ' + orientation.z.toFixed(3) + ')');
-
-		    this.position = position;
-		    this.orientation = orientation;
-		    this.move(this.position, this.orientation);
+		ServerScore: function (packet) {
+			console.log(packet.playerNumber + " " + packet.score);
 		},
-
-		serverupdate: function (playernumber, position, orientation) {
-			console.log(playernumber);
-			console.log(position);
-			this.position = position;
-			console.log(orientation);
-			this.orientation = orientation;
-		},
-
-		serverscore: function (playernumber, score) {
-			console.log(playernumber + " " + score);
-		},
-
-		servercapability: function () {
-			if ( history.pushState ) {
+		
+		ServerCapability: function () {
+			if (history.pushState) {
 				var href = location.href;
-				var i = href.indexOf("?");
+				var i = href.indexOf("#");
 				if (i >= 0) {
 					href = href.substring(0, i);
 				}
-				history.pushState( {}, document.title, href+"?"+arguments[0].id );
+				history.pushState({}, document.title, href + "#" + arguments[0].id);
 			}
-			this.player = arguments[1];
 		},
-
-		move: function (position, orientation) {
-			this.socket.emit('clientmove', position, orientation);
+		
+		ClientSpawn: function (shipId, position, orientation) {
+			if (this.socket) {
+				console.log('Spawning: shipId: ' + shipId 
+                          + '  position: (' + position.x.toFixed(3) + ', ' + position.y.toFixed(3) + ', ' + position.z.toFixed(3) + ')' 
+                          + '  orientation: (' + orientation.x.toFixed(3) + ', ' + orientation.y.toFixed(3) + ', ' + orientation.z.toFixed(3) + ')');
+				
+				this.socket.emit('ClientSpawn', shipId, position, orientation);
+			}
 		},
-
-		delta: function (deltaposition, deltaorientation) {
+		
+		ClientUpdate: function (shipId, position, orientation) {
+			if (this.socket) {
+				this.socket.emit('ClientUpdate', shipId, position, orientation);
+			}
+		},
+		
+		ClientDelta: function (deltaposition, deltaorientation) {
 			this.position[0] += deltaposition[0];
 			this.position[1] += deltaposition[1];
 			this.position[2] += deltaposition[2];
@@ -76,6 +180,6 @@ pc.script.create('PlayerClient', function(context) {
 			this.move(position, orientation);
 		}
 	};
-
+	
 	return PlayerClient;
 });

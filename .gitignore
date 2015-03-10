@@ -1,11 +1,7 @@
 ﻿################################################################################
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
-/code.playcanvas.com
-/bootstrap.js
-/data.js
-/index.html
-/logo.png
-/files/assets
 /LocalServer.bat
 /XNASpaceRace.bat
+/_localserver.bat
+/.vs/XNASpaceRace/v14/.suo
