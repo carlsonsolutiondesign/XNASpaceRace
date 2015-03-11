@@ -24,6 +24,10 @@ pc.script.create('MultiplayerServer', function (context) {
 		this.http = require('http').Server(this.app);
 		this.io = require('socket.io')(this.http);
 		this.app.use(express.static(__dirname));
+		metaServer = "http://xnaspacerace-44001.onmodulus.net";
+		var Client = require('node-rest-client').Client;
+		client = new Client();
+ 
 
 		this.io.on('connection', function (socket) {
 
@@ -38,14 +42,14 @@ pc.script.create('MultiplayerServer', function (context) {
 			socket.on('ClientJoin', function () {
 				if (thePlayers[socket.client.id]) {
 				} else {
-					MultiplayerServer.prototype.ClientJoin(socket);
+					MultiplayerServer.prototype.ClientJoin(socket, metaServer);
 				}
 			});
 			
 			socket.on('ClientRejoin', function () {
 				if (thePlayers[socket.client.id]) {
 				} else {
-					MultiplayerServer.prototype.ClientRejoin(socket, arguments);
+					MultiplayerServer.prototype.ClientRejoin(socket, arguments, metaServer);
 				}
 			});
 			
@@ -85,7 +89,7 @@ pc.script.create('MultiplayerServer', function (context) {
 
                     oldplayers[socket.client.id] = thePlayers[socket.client.id];
                     delete thePlayers[socket.client.id];
-                    MultiplayerServer.prototype.reportPlayers();
+                    MultiplayerServer.prototype.reportPlayers(socket, metaServer);
                 }
             });
 		});
@@ -113,20 +117,41 @@ pc.script.create('MultiplayerServer', function (context) {
 
 	MultiplayerServer.prototype = {
 
-		reportPlayers: function() {
+		reportPlayers: function(socket, metaServer) {
 		    var numPlayers = 0;
 
 			for (var p in thePlayers) {
 				numPlayers++;
 			}
 			io.emit('ServerMessage', "The game has "+numPlayers+" player"+(numPlayers > 1 ? "s." : "."));
+
+			var uri = socket.handshake.headers.referer;
+			var hostIndex =uri.indexOf("//")+2;
+			var trailing = uri.indexOf("/", hostIndex)-hostIndex;
+			var hostport = uri.substr(hostIndex, trailing);
+			var portIndex = -1;
+			portIndex = hostport.indexOf(":");
+			var host = "localhost";
+			var port = 51000;
+			if (portIndex >= 0) {
+				var host = hostport.substr(0, portIndex);
+				var port = hostport.substr(portIndex+1);
+			} else {
+				host = hostport;
+				port = 80;
+			}
+			args ={ path:{"host": host, port: port, players: numPlayers}};
+			client.get(metaServer+"/api/servers/${host}/${port}/${players}", args, function(data, response){
+				    console.log(data);
+			});
+ 
 		},
 
 		ClientMessage: function(socket, msg) {
 			io.emit('ServerMessage', "<" + thePlayers[socket.client.id].playerNumber + "> " + msg[0]);
 		},
 
-		ClientJoin: function (socket) {
+		ClientJoin: function (socket, metaServer) {
 			thePlayers[socket.client.id] = { playerNumber: maxplayers, id: socket.client.id, score: 0 };
 			maxplayers++;
 			
@@ -138,11 +163,11 @@ pc.script.create('MultiplayerServer', function (context) {
 			
 			io.emit('ServerMessage', thePlayers[socket.client.id].playerNumber + " joined.");
 			
-			MultiplayerServer.prototype.reportPlayers();
+			MultiplayerServer.prototype.reportPlayers(socket, metaServer);
 			socket.emit('ServerCapability', thePlayers[socket.client.id]);
 		},
 
-		ClientRejoin: function (socket, msg) {
+		ClientRejoin: function (socket, msg, metaServer) {
 			var i = msg[0].indexOf("#");
 			if (i >= 0) {
 				var id = msg[0].substring(i + 1);
@@ -157,13 +182,13 @@ pc.script.create('MultiplayerServer', function (context) {
 					
 					io.emit('ServerMessage', thePlayers[socket.client.id].playerNumber + " joined.");
 					
-					MultiplayerServer.prototype.reportPlayers();
+					MultiplayerServer.prototype.reportPlayers(socket, metaServer);
 					socket.emit('ServerCapability', thePlayers[socket.client.id]);
 				} else {
-					MultiplayerServer.prototype.ClientJoin(socket);
+					MultiplayerServer.prototype.ClientJoin(socket, metaServer);
 				}
 			} else {
-				MultiplayerServer.prototype.ClientJoin(socket);
+				MultiplayerServer.prototype.ClientJoin(socket, metaServer);
 			}
 		},
 
@@ -230,6 +255,5 @@ pc.script.create('MultiplayerServer', function (context) {
 		}
 	};
 
-	console.log(MultiplayerServer);
 	return MultiplayerServer;
 });
