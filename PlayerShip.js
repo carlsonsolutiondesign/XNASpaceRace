@@ -6,7 +6,7 @@ pc.script.create('PlayerShip', function (context) {
 		this.cameraManager = null;
 		this.playerClient = null;
 
-		this.moveDT = 0.750;
+		this.moveDT = 0.100;
 		this.nextMove = this.moveDT;
 
 		this.playerId = null;
