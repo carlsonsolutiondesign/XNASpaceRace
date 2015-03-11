@@ -1,3 +1,7 @@
+pc.script.attribute('socketIO', 'string', 'http://localhost:51000',
+{
+    displayName: "Connect String"
+});
 pc.script.create('PlayerClient', function (context) {
 	
 	var PlayerClient = function (entity) {
@@ -11,7 +15,12 @@ pc.script.create('PlayerClient', function (context) {
 		
 		initialize: function () {
 			if (typeof io !== 'undefined') {
-				this.socket = io();
+            			this.connectString = context.root.findByName(this.socketIO)||'http://localhost:51000';
+				if (location.hostname == 'playcanvas.com' && this.connectString) {
+					this.socket = io(this.connectString);
+				} else {
+					this.socket = io();
+				}
                         }
 			
 			if (this.socket) {
