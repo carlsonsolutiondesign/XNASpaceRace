@@ -303,7 +303,7 @@ pc.script.create('GameManager', function (context) {
 			}
 
 			var idx = this.players.length;
-			this.players[idx] = this.AddPlayer('networkPlayer', idx, msg.playerId, false);
+			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), idx, msg.playerId, false);
 			this.players[idx].script.PlayerShip.shipId = msg.shipId;
 
 			var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
@@ -326,6 +326,17 @@ pc.script.create('GameManager', function (context) {
 					return;
 				}
 			}
+
+		    // if the player was not found, spawn and update
+			var idx = this.players.length;
+			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), idx, msg.playerId, false);
+			this.players[idx].script.PlayerShip.shipId = msg.shipId;
+
+			var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
+			context.assets.load(asset).then(function (resources) {
+			    this.players[idx].script.PlayerShip.shipModel = resources[0];
+			    this.players[idx].script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
+			}.bind(this));
 		},
 		
 		
