@@ -126,13 +126,26 @@ pc.script.create('PlayerShip', function (context) {
 		
 		SvrUpdate: function (position, orientation) {
 
-		    // lerp from current position to target position @ 16ms
+		    // lerp from current position to target position @ 160ms
 		    if (this.targetPos) {
-		        var pos = this.entity.getPosition();
-		        pos.lerp(pos, this.targetPos, 0.016);
-		        this.entity.setPosition(pos);
 
-		        this.entity.setEulerAngles(orientation);
+		        var epsilon = 0.0001;
+
+		        var pos = this.entity.getPosition();
+
+		        var dpos = new pc.Vec3().copy(pos);
+		        dpos.sub(this.targetPos);
+
+		        if (dpos.lengthSq() > epsilon) {
+		            pos.lerp(pos, this.targetPos, 0.16);
+		            this.entity.setPosition(pos);
+
+		            this.entity.setEulerAngles(orientation);
+		        } else {
+		            position = null;
+		            orientation = null;
+		        }
+
 		    }
 
 			this.targetPos = position;
