@@ -6,8 +6,11 @@ pc.script.create('PlayerShip', function (context) {
 		this.cameraManager = null;
 		this.playerClient = null;
 
-		this.moveDT = 0.33;
+		this.moveDT = 0.100;
 		this.nextMove = this.moveDT;
+
+		this.targetPos = null;
+		this.targetOrientation = null;
 
 		this.playerId = null;
         this.index = 0;
@@ -93,7 +96,10 @@ pc.script.create('PlayerShip', function (context) {
 
 		Spawn: function () {
 
-			var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
+		    this.targetPos = null;
+		    this.targetOrientation = null;
+
+		    var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
 			if (playerSpawnPoint) {
 				this.entity.model.model = this.shipModel;
 				this.entity.setPosition(playerSpawnPoint.getPosition());
@@ -101,7 +107,7 @@ pc.script.create('PlayerShip', function (context) {
 			}
 
 			if (this.playerClient) {
-				this.playerClient.fire('ClientSpawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
+			    this.playerClient.fire('ClientSpawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 			}
 			
 			if(this.cameraManager) {
@@ -119,8 +125,18 @@ pc.script.create('PlayerShip', function (context) {
 
 		
 		SvrUpdate: function (position, orientation) {
-			this.entity.setPosition(position);
-			this.entity.setEulerAngles(orientation);
+
+		    // lerp from current position to target position @ 16ms
+		    if (this.targetPos) {
+		        var pos = this.entity.getPosition();
+		        pos.lerp(pos, this.targetPos, 0.016);
+		        this.entity.setPosition(pos);
+
+		        this.entity.setEulerAngles(orientation);
+		    }
+
+			this.targetPos = position;
+			this.targetOrientation = orientation;
 		},
 
 		
