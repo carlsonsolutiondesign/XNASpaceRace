@@ -2,6 +2,10 @@ pc.script.attribute('socketIO', 'string', 'http://localhost:51000',
 {
     displayName: "Connect String"
 });
+pc.script.attribute('metaServer', 'string', 'http://xnaspacerace-44001.onmodulus.net',
+{
+    displayName: "Metaserver Connect String"
+});
 pc.script.create('PlayerClient', function (context) {
 	
 	var PlayerClient = function (entity) {
@@ -21,6 +25,10 @@ pc.script.create('PlayerClient', function (context) {
 				} else {
 					this.socket = io();
 				}
+				this.metaConnectString = context.root.findByName(this.metaServer)||'http://xnaspacerace-44001.onmodulus.net';
+				if (this.metaConnectString) {
+					this.metaSocket = io(this.metaConnectString);
+				}
                         }
 			
 			if (this.socket) {
@@ -36,6 +44,12 @@ pc.script.create('PlayerClient', function (context) {
 				this.socket.emit('ClientRejoin', location.href);
 			} else {
 				console.log("Failed to connect to " + this.host + ":" + this.port);
+			}
+			if (this.metaSocket) {
+				// report on game servers from meta server
+				this.metaSocket.on('Stats', this.Stats, this);
+				// request game servers from meta server
+				this.metaSocket.emit('PlayerInstanceRequest');
 			}
 			
 			var root = context.root.getChildren()[0];
@@ -126,6 +140,13 @@ pc.script.create('PlayerClient', function (context) {
 
 		ServerScore: function (packet) {
 			console.log(packet.playerNumber + " " + packet.score);
+		},
+
+
+		Stats : function(gameServers) {
+			for (var gameServer in gameServers) {
+				confirm("Join "+gameServer+" with "+gameServers[gameServer]);
+			}
 		},
 		
 		ServerCapability: function () {

@@ -24,16 +24,10 @@ pc.script.create('MultiplayerServer', function (context) {
 		this.http = require('http').Server(this.app);
 		this.io = require('socket.io')(this.http);
 		this.app.use(express.static(__dirname));
-        options = {
-            transports: ['websocket'],
-        };
-		metaServer = require('socket.io-client').connect("http://localhost:8088");
-		metaServer.on('error', function (e) {
-			console.log(e);
-		});
-		metaServer.once("connect", function () {
-			console.log("Connecting to metaserver...");
-		});
+		metaServer = "http://xnaspacerace-44001.onmodulus.net";
+		var Client = require('node-rest-client').Client;
+		client = new Client();
+ 
 
 		this.io.on('connection', function (socket) {
 
@@ -130,7 +124,27 @@ pc.script.create('MultiplayerServer', function (context) {
 				numPlayers++;
 			}
 			io.emit('ServerMessage', "The game has "+numPlayers+" player"+(numPlayers > 1 ? "s." : "."));
-			metaServer.emit('GameServerStats', socket.handshake.headers.referer, numPlayers);
+
+			var uri = socket.handshake.headers.referer;
+			var hostIndex =uri.indexOf("//")+2;
+			var trailing = uri.indexOf("/", hostIndex)-hostIndex;
+			var hostport = uri.substr(hostIndex, trailing);
+			var portIndex = -1;
+			portIndex = hostport.indexOf(":");
+			var host = "localhost";
+			var port = 51000;
+			if (portIndex >= 0) {
+				var host = hostport.substr(0, portIndex);
+				var port = hostport.substr(portIndex+1);
+			} else {
+				host = hostport;
+				port = 80;
+			}
+			args ={ path:{"host": host, port: port, players: numPlayers}};
+			client.get(metaServer+"/api/servers/${host}/${port}/${players}", args, function(data, response){
+				    console.log(data);
+			});
+ 
 		},
 
 		ClientMessage: function(socket, msg) {
