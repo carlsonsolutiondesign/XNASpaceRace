@@ -1,20 +1,7 @@
-pc.script.attribute('host', 'string', 'localhost',
-{
-	displayName: "Remote Host"
-});
-
-pc.script.attribute('port', 'number', 8088,
-{
-	displayName: "Remote Port"
-});
-
 pc.script.create('PlayerClient', function (context) {
 	
 	var PlayerClient = function (entity) {
 		this.entity = entity;
-		
-		this.host = "localhost";
-		this.port = 8088;
 	};
 	
 	var players = [];
@@ -23,19 +10,9 @@ pc.script.create('PlayerClient', function (context) {
 	PlayerClient.prototype = {
 		
 		initialize: function () {
-			this.port = context.root.findByName('port') || this.port;
-			this.host = context.root.findByName('host') || this.host;
-			
-			// temporary test for Azure deployment
-		    //this.host = "xnaspacerace.azurewebsites.net";
-			var protocol = location.protocol;
-			this.host = location.hostname;
-			this.port = 1337;
-
 			if (typeof io !== 'undefined') {
-				//this.socket = io("http://" + this.host + ":" + this.port, { hostname: this.host, host: this.host, port : this.port });
-				this.socket = io("http://" + this.host, { hostname: this.host, host: this.host, port: this.port });
-            }
+				this.socket = io();
+                        }
 			
 			if (this.socket) {
 				this.socket.on('ServerMessage', this.ServerMessage, this);
