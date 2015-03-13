@@ -37,6 +37,7 @@ pc.script.create('PlayerClient', function (context) {
 			
 			this.on('ClientSpawn', this.ClientSpawn, this);
 			this.on('ClientUpdate', this.ClientUpdate, this);
+			this.on('ClientSimulate', this.ClientSimulate, this);
 		},
 		
 
@@ -175,6 +176,17 @@ pc.script.create('PlayerClient', function (context) {
 			    };
 			    socket.emit('ClientUpdate', response);
 			}
+		},
+
+
+		ClientSimulate: function (filename, filters) {
+		    if (socket) {
+		        var response = {
+		            filename: filename,
+                    filters: filters
+		        };
+		        socket.emit('ClientSimulate', response);
+		    }
 		}
 	};
 	

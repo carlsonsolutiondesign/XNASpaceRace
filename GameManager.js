@@ -373,7 +373,18 @@ pc.script.create('GameManager', function (context) {
             this.root.addChild(player);
 
             return player;
-        },
+		},
+
+
+		StartSimulation: function (filename, filters) {
+		    if (typeof filename === 'undefined')
+		        filename = 'rvbsimulation.log';
+
+		    if (typeof filters === 'undefined') {
+		        filters = ['ServerSpawn', 'ServerUpdate'];
+		    }
+		    this.playerClient.fire('ClientSimulate', filename, filters);
+		},
 
 
         GetPlayer: function (i) {

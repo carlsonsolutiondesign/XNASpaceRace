@@ -38,6 +38,10 @@ pc.script.create('GameScreen', function (context) {
             this.gameManager.ProcessInput(dt, inputManager);
 
             for (var i = 0; i < this.gameManager.gameMode; i++) {
+                if (inputManager.WasStartButtonPressed(i)) {
+                    this.gameManager.StartSimulation();
+                }
+
                 if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBackButtonPressed(i)) {
 
                     var player = this.gameManager.GetPlayer(i);

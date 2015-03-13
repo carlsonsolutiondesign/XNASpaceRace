@@ -24,6 +24,7 @@ Log.debugLevel = Object.freeze({
 	ClientSpawn: { name: 'ClientSpawn', enabled: true },
 	ClientUpdate: { name: 'ClientUpdate', enabled: false },
 	ClientQuit: { name: 'ClientQuit', enabled: true },
+	ClientSimulate: { name: 'ClientSimulate', enabled: true },
 	DispatchMessages: { name: 'DispatchMessages', enabled: false },
 	NoDispatchMessages: { name: 'NoDispatchMessages', enabled: false },
 	DispatchNMessages: { name: 'DispatchNMessages', enabled: false },
@@ -35,7 +36,7 @@ Log.debugLevel = Object.freeze({
 Log.init = function (logFilename) {
 	try {
 		this.logFilename = logFilename;
-		this.fileStream = fs.createWriteStream(this.logFilename); //, { flags: 'a', encoding: null, fd: null, mode: 0666 });
+		this.fileStream = fs.createWriteStream(this.logFilename);
 		this.isOkay = true;
 	} catch (err) {
 		console.log('Log.init error: ' + err.message);
@@ -49,16 +50,16 @@ Log.write = function (level, message) {
 		message = '';
 
 	if (level.enabled || this.debugLevel.All.enabled) {
-		if (message && typeof message !== 'string')
+
+		if (typeof message !== 'string') {
 			message = JSON.stringify(message);
-		
-		var msg = level.name + ': ' + message;
-
-		if (this.isOkay) {
-			this.fileStream.write(msg + '\n');
+			
+			if (this.isOkay) {
+				this.fileStream.write(message + '\n');
+			}
 		}
-
-		console.log(msg);
+		
+		console.log(level.name + ": " + message);
 	}
 }
 

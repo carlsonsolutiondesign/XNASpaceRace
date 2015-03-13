@@ -1,3 +1,4 @@
+var fs = require('fs');
 
 var log = require('./Logger');
 log.init('rvbgames.log');
@@ -242,6 +243,29 @@ io.on('connection', function (socket) {
     });
 
 	
+	socket.on('ClientSimulate', function (packet) {
+		try {
+			var filename = packet.filename;
+			var filters = packet.filters;
+			
+			var fileStream = fs.readFile(filename, { encoding: 'utf-8' }, function (err, data) {
+				var messages = data.split('\n');
+				for (var i = 0; i < messages.length; i++) {
+					var msg = JSON.parse(messages[i]);
+					// {"Msg":"ServerMessage","Packet":"0 joined."}
+					if (!filters || filters.indexOf(msg.Msg) >= 0) {
+						appServer.AppendMessage(msg.Msg, msg.Packet);
+					}
+				}
+			});
+			
+		} catch (err) {
+			console.log('ClientSimulate error: ' + err.message);
+		}
+
+	});
+
+
 	socket.on('disconnect', function () {
 		log.write(log.debugLevel.Disconnect, socket.client.id);
 
