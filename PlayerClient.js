@@ -4,27 +4,30 @@ pc.script.create('PlayerClient', function (context) {
 		this.entity = entity;
 	};
 	
+	var socket = null;
 	var players = [];
 	var gameManager = null;
 	
 	PlayerClient.prototype = {
 		
 		initialize: function () {
-			if (typeof io !== 'undefined') {
-				this.socket = io();
-                        }
+			//if (typeof io !== 'undefined') {
+			//	this.socket = io();
+            //}
 			
-			if (this.socket) {
-				this.socket.on('ServerMessage', this.ServerMessage, this);
-				this.socket.on('ServerJoin', this.ServerJoin, this);
-				this.socket.on('ServerRejoin', this.ServerRejoin, this);
-				this.socket.on('ServerQuit', this.ServerQuit, this);
-				this.socket.on('ServerSpawn', this.ServerSpawn, this);
-				this.socket.on('ServerUpdate', this.ServerUpdate, this);
-				this.socket.on('ServerScore', this.ServerScore, this);
-				this.socket.on('ServerCapability', this.ServerCapability, this);
+		    socket = io();
+		    if (socket) {
+			    socket.on('ServerPackets', this.ServerPackets, this);
+			    socket.on('ServerMessage', this.ServerMessage, this);
+				socket.on('ServerJoin', this.ServerJoin, this);
+				socket.on('ServerRejoin', this.ServerRejoin, this);
+				socket.on('ServerQuit', this.ServerQuit, this);
+				socket.on('ServerSpawn', this.ServerSpawn, this);
+				socket.on('ServerUpdate', this.ServerUpdate, this);
+				socket.on('ServerScore', this.ServerScore, this);
+				socket.on('ServerCapability', this.ServerCapability, this);
 
-				this.socket.emit('ClientRejoin', location.href);
+				socket.emit('ClientRejoin', location.href);
 			} else {
 				console.log("Failed to connect to " + this.host + ":" + this.port);
 			}
@@ -36,6 +39,22 @@ pc.script.create('PlayerClient', function (context) {
 			this.on('ClientUpdate', this.ClientUpdate, this);
 		},
 		
+
+        //
+	    // receiving messages from the server and dispatching them to the game
+        //
+		ServerPackets: function (packet) {
+		    var len = packet.length;
+
+		    for (var i = 0; i < len; i++) {
+		        //socket.fire(packet[i].Msg, packet[i].Packet);
+		        try {
+		            socket._callbacks[packet[i].Msg][0](packet[i].Packet);
+		        } catch (err) {
+		        }
+		    }
+		},
+
 		ServerMessage: function (packet) {
 			console.log(packet);
 		},
@@ -75,7 +94,7 @@ pc.script.create('PlayerClient', function (context) {
 					playerId: packet.playerId
 				};
 				gameManager.fire('PlayerQuit', msg);
-				console.log('playerId: ' + playerId);
+				console.log('playerId: ' + msg.playerId);
 			}
 		},
 		
@@ -101,7 +120,7 @@ pc.script.create('PlayerClient', function (context) {
 		},
 		
 		ServerUpdate: function (packet) {
-			console.log('serverupdate');
+		    //console.log('serverupdate');
 
 			if (gameManager) {
 				var msg = {
@@ -111,6 +130,7 @@ pc.script.create('PlayerClient', function (context) {
 					position: new pc.Vec3(packet.position.data[0], packet.position.data[1], packet.position.data[2]),
 					orientation: new pc.Vec3(packet.orientation.data[0], packet.orientation.data[1], packet.orientation.data[2])
 				};
+
 				gameManager.fire('PlayerUpdate', msg);
 			}
 		},
@@ -130,31 +150,31 @@ pc.script.create('PlayerClient', function (context) {
 			}
 		},
 		
+
+	    //
+	    // Sending messages to the server
+        //
 		ClientSpawn: function (shipId, position, orientation) {
-			if (this.socket) {
-				console.log('Spawning: shipId: ' + shipId 
-                          + '  position: (' + position.x.toFixed(3) + ', ' + position.y.toFixed(3) + ', ' + position.z.toFixed(3) + ')' 
-                          + '  orientation: (' + orientation.x.toFixed(3) + ', ' + orientation.y.toFixed(3) + ', ' + orientation.z.toFixed(3) + ')');
-				
-				this.socket.emit('ClientSpawn', shipId, position, orientation);
+			if (socket) {
+			    var response = {
+			        shipId: shipId,
+			        position: position,
+                    orientation: orientation
+				};
+
+				socket.emit('ClientSpawn', response);
 			}
 		},
 		
 		ClientUpdate: function (shipId, position, orientation) {
-			if (this.socket) {
-				this.socket.emit('ClientUpdate', shipId, position, orientation);
+			if (socket) {
+			    var response = {
+			        shipId: shipId,
+			        position: position,
+			        orientation: orientation
+			    };
+			    socket.emit('ClientUpdate', response);
 			}
-		},
-		
-		ClientDelta: function (deltaposition, deltaorientation) {
-			this.position[0] += deltaposition[0];
-			this.position[1] += deltaposition[1];
-			this.position[2] += deltaposition[2];
-			this.position[3] += deltaposition[3];
-			this.orientation[0] += deltaorientation[0];
-			this.orientation[1] += deltaorientation[1];
-			this.orientation[2] += deltaorientation[2];
-			this.move(position, orientation);
 		}
 	};
 	

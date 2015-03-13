@@ -6,10 +6,10 @@ pc.script.create('PlayerShip', function (context) {
 		this.cameraManager = null;
 		this.playerClient = null;
 
-		this.moveDT = 0.100;
-		this.nextMove = this.moveDT;
+		this.updateDT = 0.20;
+		this.nextUpdate = this.updateDT;
 
-		this.targetPos = null;
+		this.targetPosition = null;
 		this.targetOrientation = null;
 
 		this.playerId = null;
@@ -85,9 +85,9 @@ pc.script.create('PlayerShip', function (context) {
 			}
 
 			if (this.playerClient) {
-				this.nextMove -= dt;
-				if (this.nextMove <= 0.0) {
-					this.nextMove = this.moveDT;
+				this.nextUpdate -= dt;
+				if (this.nextUpdate <= 0.0) {
+					this.nextUpdate = this.updateDT;
 					this.playerClient.fire('ClientUpdate', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 				}
 			}
@@ -96,7 +96,7 @@ pc.script.create('PlayerShip', function (context) {
 
 		Spawn: function () {
 
-		    this.targetPos = null;
+		    this.targetPosition = null;
 		    this.targetOrientation = null;
 
 		    var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
@@ -123,33 +123,54 @@ pc.script.create('PlayerShip', function (context) {
 	        }
         },
 
-		
-		SvrUpdate: function (position, orientation) {
 
-		    // lerp from current position to target position @ 160ms
-		    if (this.targetPos) {
+		__update: function (dt) {
 
-		        var epsilon = 0.0001;
+		    if (!this.IsAlive())
+		        return;
+
+		    // lerp from current position to target position
+		    if (this.targetPosition) {
+
+		        var lerpEpsilon = 0.0001;
 
 		        var pos = this.entity.getPosition();
-
 		        var dpos = new pc.Vec3().copy(pos);
-		        dpos.sub(this.targetPos);
+		        dpos.sub(this.targetPosition);
 
-		        if (dpos.lengthSq() > epsilon) {
-		            pos.lerp(pos, this.targetPos, 0.16);
+		        if (dpos.lengthSq() > lerpEpsilon) {
+		            pos.lerp(pos, this.targetPosition, dt);
 		            this.entity.setPosition(pos);
-
-		            this.entity.setEulerAngles(orientation);
 		        } else {
-		            position = null;
-		            orientation = null;
+		            this.targetPosition = null;
 		        }
-
 		    }
 
-			this.targetPos = position;
-			this.targetOrientation = orientation;
+		    if (this.targetOrientation) {
+
+		        var slerpEpsilon = 0.001;
+
+		        var angles = this.entity.getEulerAngles();
+		        var q1 = new pc.Quat().setFromEulerAngles(angles.x, angles.y, angles.z);
+		        var q2 = new pc.Quat().setFromEulerAngles(this.targetOrientation.x, this.targetOrientation.y, this.targetOrientation.z);
+		        var q3 = new pc.Quat().slerp(q1, q2, dt);
+
+		        //if (q3.lengthSq() > slerpEpsilon) {
+		        if (true) {
+		            this.entity.setEulerAngles(q3.getEulerAngles());
+		        } else {
+		            this.targetOrientation = null;
+		        }
+		    }
+		},
+
+
+		SvrUpdate: function (position, orientation) {
+
+		    this.targetPosition = position;
+		    this.targetOrientation = orientation;
+
+		    this.__update(0.033);
 		},
 
 		

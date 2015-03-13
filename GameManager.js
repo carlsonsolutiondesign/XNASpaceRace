@@ -314,7 +314,8 @@ pc.script.create('GameManager', function (context) {
 		
 		
 		PlayerUpdate: function (msg) {
-			console.log('GameManager.PlayerUpdate()');
+		    //console.log('GameManager.PlayerUpdate()');
+
 			// make sure that the playerId is not for the local player
 			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
 				return;
@@ -335,7 +336,8 @@ pc.script.create('GameManager', function (context) {
 			var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
 			context.assets.load(asset).then(function (resources) {
 			    this.players[idx].script.PlayerShip.shipModel = resources[0];
-			    this.players[idx].script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
+			    this.players[idx].entity.setPosition(msg.position);
+			    this.players[idx].entity.setEulerAngles(msg.orientation);
 			}.bind(this));
 		},
 		
@@ -434,7 +436,8 @@ pc.script.create('GameManager', function (context) {
 			// update networked players
 			for (var i = 2; i < this.players.length; i++) {
 				this.players[i].script.PlayerShip.Update(dt);
-			}
+				this.players[i].script.PlayerShip.__update(dt);
+            }
 
 			// uncomment the below to run simulation on the first player
             //if (this.elapsedTime > 8.0) {
