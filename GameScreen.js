@@ -38,8 +38,11 @@ pc.script.create('GameScreen', function (context) {
             this.gameManager.ProcessInput(dt, inputManager);
 
             for (var i = 0; i < this.gameManager.gameMode; i++) {
-                if (inputManager.WasStartButtonPressed(i)) {
-                    this.gameManager.StartSimulation();
+                if (inputManager.WasRightShoulderPressed(i) || inputManager.WasKeyPressed(i, pc.KEY_PAGE_UP)) {
+                    this.gameManager.StartSimulation('xnaspacerace.ship.01.simulation.log');
+                }
+                if (inputManager.WasLeftShoulderPressed(i) || inputManager.WasKeyPressed(i, pc.KEY_PAGE_DOWN)) {
+                    this.gameManager.StartSimulation('xnaspacerace.ship.02.simulation.log');
                 }
 
                 if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBackButtonPressed(i)) {

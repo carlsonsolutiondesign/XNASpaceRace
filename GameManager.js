@@ -378,7 +378,7 @@ pc.script.create('GameManager', function (context) {
 
 		StartSimulation: function (filename, filters) {
 		    if (typeof filename === 'undefined')
-		        filename = 'rvbsimulation.log';
+		        filename = 'xnaspacerace.simulation.log';
 
 		    if (typeof filters === 'undefined') {
 		        filters = ['ServerSpawn', 'ServerUpdate'];

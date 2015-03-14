@@ -1,7 +1,9 @@
 var fs = require('fs');
 
 var log = require('./Logger');
-log.init('rvbgames.log');
+log.init('xnaspacerace.rvbgames.log');
+
+var simulationPath = './simulationlogs/';
 
 var express = require('express');
 var app = express();
@@ -248,13 +250,44 @@ io.on('connection', function (socket) {
 			var filename = packet.filename;
 			var filters = packet.filters;
 			
-			var fileStream = fs.readFile(filename, { encoding: 'utf-8' }, function (err, data) {
+			var fileStream = fs.readFile(simulationPath + filename, { encoding: 'utf-8' }, function (err, data) {
+				// split the file into individual text lines
 				var messages = data.split('\n');
+				
+				// loop through the messages and play them back at roughly the same time
+				var startTime = null;
+				var simulateTime = null;
+
 				for (var i = 0; i < messages.length; i++) {
-					var msg = JSON.parse(messages[i]);
-					// {"Msg":"ServerMessage","Packet":"0 joined."}
-					if (!filters || filters.indexOf(msg.Msg) >= 0) {
-						appServer.AppendMessage(msg.Msg, msg.Packet);
+					// make sure that there is a text line to process
+					if (messages[i].length > 0) {
+						// convert the text line to JSON
+						var msg = JSON.parse(messages[i]);
+						
+						// if the are no filters or the Msg is in the filters then process it
+						if (!filters || filters.indexOf(msg.Message.Msg) >= 0) {
+							
+							// if the startTime is null, meaning nothing has been processed yet, get the time from the Msg
+							if (startTime === null) {
+								startTime = new Date(msg.DateTime);
+							}
+							
+							// read the simulation time from the Msg
+							simulateTime = new Date(msg.DateTime);
+							
+							var delta = (simulateTime - startTime);
+							
+							// set a timer based on (simulationTime - startTime)
+							setTimeout(function (msg) {
+								var packet = msg.Message.Packet;
+								
+								if (typeof packet !== 'string')
+									packet = JSON.stringify(msg.Message.Packet);
+								
+								io.emit(msg.Message.Msg, msg.Message.Packet);
+							
+							}, (delta), msg);
+						}
 					}
 				}
 			});

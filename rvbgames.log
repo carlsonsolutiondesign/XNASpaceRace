@@ -1,5 +1,0 @@
-{"Msg":"ServerMessage","Packet":"0 joined."}
-{"Msg":"ServerSpawn","Packet":{"playerId":"MOYaFDZryy31IIrSAAAA","playerNumber":0,"shipId":1482780,"position":{"data":{"0":0.5846824645996094,"1":0,"2":1.1257667541503906}},"orientation":{"data":{"0":0,"1":0,"2":0}}}}
-{"Msg":"ServerUpdate","Packet":{"playerId":"MOYaFDZryy31IIrSAAAA","playerNumber":0,"shipId":1482780,"position":{"data":{"0":1.4009405374526978,"1":0,"2":2.6974165439605713}},"orientation":{"data":{"0":0,"1":0,"2":0}}}}
-{"Msg":"ServerUpdate","Packet":{"playerId":"MOYaFDZryy31IIrSAAAA","playerNumber":0,"shipId":1482780,"position":{"data":{"0":2.1132254600524902,"1":0,"2":3.9789319038391113}},"orientation":{"data":{"0":0,"1":0,"2":0}}}}
-{"Msg":"ServerUpdate","Packet":{"playerId":"MOYaFDZryy31IIrSAAAA","playerNumber":0,"shipId":1482780,"position":{"data":{"0":2.7709801197052,"1":0,"2":5.098479270935059}},"orientation":{"data":{"0":0,"1":0,"2":0}}}}
