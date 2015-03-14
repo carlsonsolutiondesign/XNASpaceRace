@@ -3,7 +3,9 @@ pc.script.create('PlayerShip', function (context) {
     // Creates a new PlayerShip instance
     var PlayerShip = function (entity) {
         this.entity = entity;
-		this.cameraManager = null;
+        this.cameraManager = null;
+
+        this.localPlayer = true;
 		this.playerClient = null;
 
 		this.updateDT = 0.20;
@@ -13,8 +15,8 @@ pc.script.create('PlayerShip', function (context) {
 		this.targetOrientation = null;
 
 		this.playerId = null;
-        this.index = 0;
-        this.shipId = null;
+		this.shipId = null;
+		this.spawnedId = null;
 
         this.shield = 1.0;                                      // current shield charge (1.0 when ready to use)
         this.boost = 1.0;                                       // curren boost charge (1.0 when ready to use)
@@ -32,11 +34,9 @@ pc.script.create('PlayerShip', function (context) {
         this.damageTime = 0.0;                                  // time left showing damage screen 
         this.damageColor = new pc.Color(0.0, 0.0, 0.0, 0.0);    // current damage screen color
 
-        this.playerIndex = 0;                                   // the player index for this ship
         this.score = 0;                                         // the player current score
 
         this.camera3DPerson = true;
-        this.shipModel = null;                                  // player ship model
 
         this.elapsedTime = 0.0;
 
@@ -100,9 +100,19 @@ pc.script.create('PlayerShip', function (context) {
 		    this.targetOrientation = null;
 
 		    var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
-			if (playerSpawnPoint) {
-				this.entity.model.model = this.shipModel;
-				this.entity.setPosition(playerSpawnPoint.getPosition());
+		    if (playerSpawnPoint) {
+
+		        // if the model is not loaded or the player changed ship load the new model
+			    if (!this.spawnedId || this.spawnedId != this.shipId) {
+			        this.spawnedId = this.shipId;
+
+			        var asset = context.assets.getAssetById(this.shipId);
+			        context.assets.load(asset).then(function (resources) {
+			            this.entity.model.model = resources[0];
+			        }.bind(this));
+			    }
+
+			    this.entity.setPosition(playerSpawnPoint.getPosition());
 				this.entity.setEulerAngles(playerSpawnPoint.getEulerAngles());
 			}
 

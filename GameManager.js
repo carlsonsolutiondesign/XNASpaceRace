@@ -244,7 +244,8 @@ pc.script.create('GameManager', function (context) {
             this.currentLevel = 0;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
-            this.players = [this.AddPlayer('player1', 0, 0, true), this.AddPlayer('player2', 1, 0, 0, true)];
+            // add first player
+            this.players[0] = this.AddPlayer('player1', 0, true);
 
             this.counter = 0;
 
@@ -259,27 +260,24 @@ pc.script.create('GameManager', function (context) {
         
 		
 		PlayerJoined: function (msg) {
-			console.log('GameManager.PlayerJoined()');
 			// the playerId is for the local player to save a copy
 			this.players[0].script.PlayerShip.playerId = msg.playerId;
 		},
 		
 
 		PlayerRejoined: function (msg) {
-			console.log('GameManager.PlayerRejoined()');
 			// the playerId is for the local player to save a copy
 			this.players[0].script.PlayerShip.playerId = msg.playerId;
 		},		
 		
 		
 		PlayerQuit: function (msg) {
-			console.log('GameManager.PlayerQuit()');
 			// make sure that the playerId is not for the local player
 			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
 				return;
 			
 			// otherwise remove network player if found in list
-			for (var i = 2; i < this.players.length; i++) {
+			for (var i = 1; i < this.players.length; i++) {
 				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
 					this.players.splice(i, 1);
 					return;
@@ -289,39 +287,31 @@ pc.script.create('GameManager', function (context) {
 		
 		
 		PlayerSpawned: function (msg) {
-			console.log('GameManager.PlayerSpawned()');
 			// make sure that the playerId is not for the local player
 			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
 				return;
 
 			// otherwise add a network player if needed, and spawn the player
-			for (var i = 2; i < this.players.length; i++) {
+			for (var i = 1; i < this.players.length; i++) {
 				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
-					this.players[i].script.PlayerShip.Spawn();
+				    this.players[i].script.PlayerShip.Spawn();
 					return;
 				}
 			}
 
 			var idx = this.players.length;
-			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), idx, msg.playerId, false);
+			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), msg.playerId, false);
 			this.players[idx].script.PlayerShip.shipId = msg.shipId;
-
-			var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
-			context.assets.load(asset).then(function (resources) {
-				this.players[idx].script.PlayerShip.shipModel = resources[0];
-			}.bind(this));
 		},
 		
 		
 		PlayerUpdate: function (msg) {
-		    //console.log('GameManager.PlayerUpdate()');
-
 			// make sure that the playerId is not for the local player
 			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
 				return;
 			
 			// otherwise update the player
-			for (var i = 2; i < this.players.length; i++) {
+			for (var i = 1; i < this.players.length; i++) {
 				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
 					this.players[i].script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
 					return;
@@ -330,19 +320,12 @@ pc.script.create('GameManager', function (context) {
 
 		    // if the player was not found, spawn and update
 			var idx = this.players.length;
-			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), idx, msg.playerId, false);
+			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), msg.playerId, false);
 			this.players[idx].script.PlayerShip.shipId = msg.shipId;
-
-			var asset = context.assets.getAssetById(this.players[idx].script.PlayerShip.shipId);
-			context.assets.load(asset).then(function (resources) {
-			    this.players[idx].script.PlayerShip.shipModel = resources[0];
-			    this.players[idx].entity.setPosition(msg.position);
-			    this.players[idx].entity.setEulerAngles(msg.orientation);
-			}.bind(this));
 		},
 		
 		
-		AddPlayer: function (name, index, playerId, localPlayer) {
+		AddPlayer: function (name, playerId, localPlayer) {
 
             var player = new pc.Entity(context);
             player.setName(name);
@@ -366,7 +349,7 @@ pc.script.create('GameManager', function (context) {
 				player.addChild(cameraOffset);
 			}
 
-			player.script.PlayerShip.index = index;
+			player.script.PlayerShip.localPlayer = localPlayer;
 			player.script.PlayerShip.playerId = playerId
             player.script.PlayerShip.shipId = 0;
 
@@ -395,8 +378,20 @@ pc.script.create('GameManager', function (context) {
 
 
         SetShips: function (player1ShipId, player2ShipId, invertYAxis) {
-            this.players[0].script.PlayerShip.shipId = player1ShipId;
-            this.players[1].script.PlayerShip.shipId = player2ShipId;
+            if (player1ShipId) {
+                if (!this.players || !this.players[0])
+                    this.players[0] = this.AddPlayer('player1', 0, 0, true);
+
+                this.players[0].script.PlayerShip.shipId = player1ShipId;
+            }
+
+            // local multiplayer will not work with networked game play
+            if (player2ShipId) {
+                if (!this.players || !this.players[1])
+                    this.players[1] = this.AddPlayer('player2', 1, 0, true);
+
+                this.players[1].script.PlayerShip.shipId = player2ShipId;
+            }
 
             this.invertYAxis = invertYAxis;
         },
@@ -407,7 +402,7 @@ pc.script.create('GameManager', function (context) {
             if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
                 return { Winner: 0, ShipId: this.players[0].script.PlayerShip.shipId };
             } else {
-                // need to add code for ties
+                // need to add code for ties and for network players
                 if (this.players[0].script.PlayerShip.score >= this.players[1].script.PlayerShip.score) {
                     return { Winner: 0, ShipId: this.players[0].script.PlayerShip.shipId };
                 } else {
@@ -428,32 +423,14 @@ pc.script.create('GameManager', function (context) {
 			
 			this.elapsedTime += dt;
 
-			// update local players
-			switch (this.gameMode) {
-				case window.GameManager.GameMode.SinglePlayer:
-					this.players[0].script.PlayerShip.Update(dt);
-					break;
+			// update players
+			for (var i = 0; i < this.players.length; i++) {
+			    this.players[i].script.PlayerShip.Update(dt);
 
-				case window.GameManager.GameMode.MultiPlayer:
-					this.players[0].script.PlayerShip.Update(dt);
-					this.players[1].script.PlayerShip.Update(dt);
-					break;
-
-				default:
-					this.players[0].script.PlayerShip.Update(dt);
-					break;
-			}
-			
-			// update networked players
-			for (var i = 2; i < this.players.length; i++) {
-				this.players[i].script.PlayerShip.Update(dt);
-				this.players[i].script.PlayerShip.__update(dt);
+                // network players motion is simulated
+			    if (!this.players[i].script.PlayerShip.localPlayer)
+				    this.players[i].script.PlayerShip.__update(dt);
             }
-
-			// uncomment the below to run simulation on the first player
-            //if (this.elapsedTime > 8.0) {
-            //    this.players[0].script.PlayerShip.simulate = true;
-            //}
 		},
 		
 		
@@ -612,10 +589,10 @@ pc.script.create('GameManager', function (context) {
 			if (mgr)
 				this.players[0].script.PlayerShip.cameraManager = mgr.script.CameraManager;
 
-            var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
-            context.assets.load(asset).then(function (resources){
-                this.players[0].script.PlayerShip.shipModel = resources[0];
-            }.bind(this));
+            //var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
+            //context.assets.load(asset).then(function (resources){
+            //    this.players[0].script.PlayerShip.shipModel = resources[0];
+            //}.bind(this));
         },
 
 
