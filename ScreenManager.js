@@ -577,11 +577,14 @@ pc.script.create('ScreenManager', function (context) {
         },
 
 
-        _unloadLevel: function () {
+        UnloadLevel: function () {
 
             if (this.currentLevelPack) {
+                var name = this.currentLevelPack.name;
                 this.currentLevelPack.hierarchy.destroy(context.systems);
                 this.currentLevelPack = null;
+
+                this.fire('LevelUnloaded', name);
             }
 
             var menuCamera = context.root.findByName('MenuCamera');
@@ -590,8 +593,8 @@ pc.script.create('ScreenManager', function (context) {
         },
 
 
-        onLoadMenu: function () {
-            this._unloadLevel();
+        LoadMenu: function () {
+            this.UnloadLevel();
             this._loadLevel(window.ScreenManager.Menu.id);
 
             var menuCamera = context.root.findByName('MenuCamera');
@@ -600,9 +603,9 @@ pc.script.create('ScreenManager', function (context) {
         },
 
 
-        onLoadLevel: function (levelId) {
+        LoadLevel: function (levelId) {
             if (levelId) {
-                this._unloadLevel();
+                this.UnloadLevel();
                 this._loadLevel(levelId);
             }
         }

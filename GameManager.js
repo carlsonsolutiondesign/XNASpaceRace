@@ -98,7 +98,7 @@ pc.script.create('GameManager', function (context) {
         this.gameMode = null;
         this.currentLevel = null;
 
-        this.players = [];
+        this.players = null;
         this.invertYAxis = 0;
 		
         this.realCrosshairTexture = null;
@@ -170,8 +170,6 @@ pc.script.create('GameManager', function (context) {
         this._lights = [];
         this._globalLights = [];
         this._localLights = [[], []];
-
-        this.counter = 0;
     };
 
     window.GameManager =
@@ -187,7 +185,8 @@ pc.script.create('GameManager', function (context) {
 
     window.GameManager.GameMode = Object.freeze({None: 0, SinglePlayer: 1, MultiPlayer: 2});
     window.GameManager.MaxPlayers = 2;
-        
+    window.GameManager.PlayerId = Object.freeze({PlayerOne: 'AACC', PlayerTwo: 'BBDD'});
+
     window.GameManager.RenderTechnique = Object.freeze(
     {
         PlainMapping: 0,                        // plain texture mapping
@@ -244,12 +243,10 @@ pc.script.create('GameManager', function (context) {
             this.currentLevel = 0;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
 
-            // add first player
-            this.players[0] = this.AddPlayer('player1', 0, true);
+            this.AddPlayerListNode();
 
-            this.counter = 0;
-
-			this.screenManager.on('LevelLoaded', this.LevelLoaded, this);
+			this.screenManager.on('LevelLoaded', this.onLevelLoaded, this);
+			this.screenManager.on('LevelUnloaded', this.onLevelUnloaded, this);
 
 			this.on('PlayerJoined', this.PlayerJoined, this);
 			this.on('PlayerRejoined', this.PlayerRejoined, this);
@@ -259,122 +256,161 @@ pc.script.create('GameManager', function (context) {
         },
         
 		
-		PlayerJoined: function (msg) {
-			// the playerId is for the local player to save a copy
-			this.players[0].script.PlayerShip.playerId = msg.playerId;
-		},
-		
+        AddPlayerListNode: function () {
+            this.players = context.root.findByName('Players');
+            if (!this.players) {
+                this.players = new pc.Entity();
+                this.players.name = 'Players';
+                context.root.addChild(this.players);
+            }
+        },
+
+
+        FindPlayer: function (playerId) {
+            if (!this.players)
+                this.AddPlayerListNode();
+
+            var players = this.players.getChildren();
+            for (var i = 0; i < players.length; i++) {
+                var playerShip = players[i].script.PlayerShip;
+                if (playerShip.playerId === playerId || (playerShip.localId && playerShip.localId === playerId)) {
+                    return players[i];
+                }
+            }
+
+            return null;
+        },
+
+
+        FindLocalPlayers: function () {
+            if (!this.players)
+                this.AddPlayerListNode();
+
+            var localPlayers = [];
+            var players = this.players.getChildren();
+            for (var i = 0; i < players.length; i++) {
+                if (players[i].script.PlayerShip.isLocalPlayer) {
+                    localPlayers.push(players[i]);
+                }
+            }
+
+            return localPlayers;
+        },
+
+
+        PlayerJoined: function (msg) {
+            var localPlayers = this.FindLocalPlayers();
+
+            if (localPlayers) {
+                switch(localPlayers.length) {
+                    case 0:
+                        var playerOne = this.AddPlayer('player1', window.GameManager.PlayerId.PlayerOne, true);
+                        if (playerOne)
+                            playerOne.script.PlayerShip.playerId = msg.playerId;
+                        break;
+
+                    case 1:
+                        localPlayers[0].script.PlayerShip.playerId = msg.playerId;
+                        break;
+                }
+            }
+        },		
+
 
 		PlayerRejoined: function (msg) {
-			// the playerId is for the local player to save a copy
-			this.players[0].script.PlayerShip.playerId = msg.playerId;
-		},		
+		    var localPlayers = this.FindLocalPlayers();
+
+		    if (localPlayers) {
+		        switch (localPlayers.length) {
+		            case 0:
+		                var playerOne = this.AddPlayer('player1', window.GameManager.PlayerId.PlayerOne, true);
+		                if (playerOne)
+		                    playerOne.script.PlayerShip.playerId = msg.playerId;
+		                break;
+
+		            case 1:
+		                localPlayers[0].script.PlayerShip.playerId = msg.playerId;
+		                break;
+		        }
+		    }
+		},
 		
 		
 		PlayerQuit: function (msg) {
-			// make sure that the playerId is not for the local player
-			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
-				return;
-			
-			// otherwise remove network player if found in list
-			for (var i = 1; i < this.players.length; i++) {
-			    if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
-			        // remove player from Players node
-			        var playerNode = context.root.findByName('Players');
-			        if (playerNode) {
-			            var players = playerNode.getChildren();
-			            for (var p = 0; p < players.length; p++) {
-			                if (players[p].script.PlayerShip.playerId == msg.PlayerId) {
-			                    players.removeChild(players[p]);
-			                    break;
-			                }
-			            }
-			        }
+		    var player = this.FindPlayer(msg.playerId);
 
-					this.players.splice(i, 1);
-					return;
-				}
+		    if (player) {
+		        this.players.removeChild(player);
 			}
 		},		
 		
 		
 		PlayerSpawned: function (msg) {
-			// make sure that the playerId is not for the local player
-			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
-				return;
+		    var player = this.FindPlayer(msg.playerId);
 
-			// otherwise add a network player if needed, and spawn the player
-			for (var i = 1; i < this.players.length; i++) {
-				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
-				    this.players[i].script.PlayerShip.Spawn();
-					return;
-				}
-			}
+		    if (player) {
+		        if (!player.script.PlayerShip.isLocalPlayer)
+		            player.script.PlayerShip.Spawn();
+		        return;
+		    }
 
-			var idx = this.players.length;
-			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), msg.playerId, false);
-			this.players[idx].script.PlayerShip.shipId = msg.shipId;
+		    // if the player was not found, add them, spawn and update
+		    player = this.AddPlayer('networkPlayer-' + Date(), msg.playerId, false);
+			if (player)
+			    player.script.PlayerShip.shipId = msg.shipId;
 		},
 		
 		
 		PlayerUpdate: function (msg) {
-			// make sure that the playerId is not for the local player
-			if (this.players[0].script.PlayerShip.playerId === msg.playerId)
-				return;
-			
-			// otherwise update the player
-			for (var i = 1; i < this.players.length; i++) {
-				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
-					this.players[i].script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
-					return;
-				}
-			}
+		    var player = this.FindPlayer(msg.playerId);
 
-		    // if the player was not found, spawn and update
-			var idx = this.players.length;
-			this.players[idx] = this.AddPlayer('networkPlayer-'+idx.toFixed(2), msg.playerId, false);
-			this.players[idx].script.PlayerShip.shipId = msg.shipId;
+		    if (player) {
+		        if (!player.script.PlayerShip.isLocalPlayer)
+		            player.script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
+		        return;
+		    }
+
+		    // if the player was not found, add them, spawn and update
+		    player = this.AddPlayer('networkPlayer-' + Date(), msg.playerId, false);
+            if(player)
+			    player.script.PlayerShip.shipId = msg.shipId;
 		},
 		
 		
 		AddPlayer: function (name, playerId, localPlayer) {
+            // make sure that the player doesn't already exist
+		    var player = this.FindPlayer(playerId);
 
-            var player = new pc.Entity(context);
-            player.setName(name);
+		    if (!player) {
+		        player = new pc.Entity(context);
+		        player.setName(name);
 
-			player.addComponent('model', { type: 'asset' });
+		        player.addComponent('model', { type: 'asset' });
 
-			context.systems.script.addComponent(player,
-            {
-                scripts:
-                [
-					{ url: 'PlayerShip.js', name: 'PlayerShip' },
-					{ url: 'Collider.js', name: 'Collider' }
-                ]
-            });
+		        context.systems.script.addComponent(player,
+                {
+                    scripts:
+                    [
+                        { url: 'PlayerShip.js', name: 'PlayerShip' },
+                        { url: 'Collider.js', name: 'Collider' }
+                    ]
+                });
 
-			if (localPlayer) {
-				player.script.PlayerShip.playerClient = this.playerClient;
+		        player.script.PlayerShip.playerId = playerId
+		        player.script.PlayerShip.shipId = 0;
+		        player.script.PlayerShip.isLocalPlayer = localPlayer;
 
-				var cameraOffset = new pc.Entity(context);
-				cameraOffset.name = 'CameraOffset';
-				player.addChild(cameraOffset);
-			}
+		        if (localPlayer) {
+		            player.script.PlayerShip.localId = playerId;
+		            player.script.PlayerShip.playerClient = this.playerClient;
 
-			player.script.PlayerShip.localPlayer = localPlayer;
-			player.script.PlayerShip.playerId = playerId
-            player.script.PlayerShip.shipId = 0;
+		            var cameraOffset = new pc.Entity(context);
+		            cameraOffset.name = 'CameraOffset';
+		            player.addChild(cameraOffset);
+		        }
 
-            var playerNode = context.root.findByName('Players');
-            if (!playerNode) {
-                var entity = new pc.Entity();
-                entity.name = 'Players';
-                context.root.addChild(entity);
-
-                playerNode = entity;
-            }
-            
-            playerNode.addChild(player);
+		        this.players.addChild(player);
+		    }
 
             return player;
 		},
@@ -391,27 +427,38 @@ pc.script.create('GameManager', function (context) {
 		},
 
 
-        GetPlayer: function (i) {
-            if (this.players && this.players[i]) {
-                return this.players[i].script.PlayerShip;
+		SetShips: function (player1ShipId, player2ShipId, invertYAxis) {
+            if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
+                var localPlayers = this.FindLocalPlayers();
+                // remove player two
+                if(localPlayers) {
+                    for (var i = 0; i < localPlayers.length; i++){
+                        if(localPlayers[i].script.PlayerShip.localId === window.GameManager.PlayerId.PlayerTwo)
+                            this.players.removeChild(localPlayers[i]);
+                    }
+                }
             }
-        },
 
-
-        SetShips: function (player1ShipId, player2ShipId, invertYAxis) {
+            // update player one shipId or add player
             if (player1ShipId) {
-                if (!this.players || !this.players[0])
-                    this.players[0] = this.AddPlayer('player1', 0, 0, true);
-
-                this.players[0].script.PlayerShip.shipId = player1ShipId;
+                var playerOne = this.AddPlayer('player1', window.GameManager.PlayerId.PlayerOne, true);
+                if (playerOne) {
+                    playerOne.script.PlayerShip.shipId = player1ShipId;
+                    if (playerOne.model.model) {
+                        playerOne.model.model = null;
+                    }
+                }
             }
 
-            // local multiplayer will not work with networked game play
+		    // update player two shipId or add player
             if (player2ShipId) {
-                if (!this.players || !this.players[1])
-                    this.players[1] = this.AddPlayer('player2', 1, 0, true);
-
-                this.players[1].script.PlayerShip.shipId = player2ShipId;
+                var playerTwo = this.AddPlayer('player2', window.GameManager.PlayerId.PlayerTwo, true);
+                if (playerTwo) {
+                    playerTwo.script.PlayerShip.shipId = player2ShipId;
+                    if (playerTwo.model.model) {
+                        playerTwo.model.model = null;
+                    }
+                }
             }
 
             this.invertYAxis = invertYAxis;
@@ -420,15 +467,50 @@ pc.script.create('GameManager', function (context) {
 
         GetWinner: function () {
 
-            if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
-                return { Winner: 0, ShipId: this.players[0].script.PlayerShip.shipId };
-            } else {
-                // need to add code for ties and for network players
-                if (this.players[0].script.PlayerShip.score >= this.players[1].script.PlayerShip.score) {
-                    return { Winner: 0, ShipId: this.players[0].script.PlayerShip.shipId };
-                } else {
-                    return { Winner: 1, ShipId: this.players[1].script.PlayerShip.shipId };
+            if (this.players) {
+                // since there are only two Winner textures to choose from on the EndScreen.js:
+                //     Player One Wins, or Player Two Wins
+                // during a local multiplayer game the Player Wins textures reflect correctly
+                //
+                // during a networked game Player One refers to the local player, and Player Two is 
+                // the networked player
+                var winnerId = '';
+                var winnerTextureIndex = 0;
+                var winnerShipId = 0;
+                var highestScore = 0;
+
+                var players = this.players.getChildren();
+
+                // incase only one player, and the player exited the game make them the winner
+                if (players.length === 1) {
+                    return { Winner: winnerTextureIndex, ShipId: players[0].script.PlayerShip.shipId };
                 }
+
+                for (var i = 0; i < players.length; i++) {
+                    if (players[i].script.PlayerShip.score >= highestScore) {
+                        // save the highest score, and the ship id
+                        hightestScore = players[i].script.PlayerShip.score;
+                        winnerShipId = players[i].script.PlayerShip.shipId;
+                        winnerTextureIndex = 1;
+
+                        // if it is a local player it is either player one with network play (and socket id)
+                        // or player two with the original assigned id
+                        if (players[i].script.PlayerShip.isLocalPlayer) {
+                            if (players[i].script.PlayerShip.playerId === window.GameManager.PlayerId.PlayerTwo) {
+                                winnerTextureIndex = 1;
+                                winnerShipId = players[i].script.PlayerShip.shipId;
+                            } else {
+                                winnerTextureIndex = 0;
+                                winnerShipId = players[i].script.PlayerShip.shipId;
+                            }
+                        }
+                    }
+                }
+
+                return { Winner: winnerTextureIndex, ShipId: winnerShipId };
+
+            } else {
+                return { Winner: 0, ShipId: 0 };
             }
         },
 
@@ -444,14 +526,17 @@ pc.script.create('GameManager', function (context) {
 			
 			this.elapsedTime += dt;
 
-			// update players
-			for (var i = 0; i < this.players.length; i++) {
-			    this.players[i].script.PlayerShip.Update(dt);
+		    // update players
+			if (this.players) {
+			    var players = this.players.getChildren();
+			    for (var i = 0; i < players.length; i++) {
+			        players[i].script.PlayerShip.Update(dt);
 
-                // network players motion is simulated
-			    if (!this.players[i].script.PlayerShip.localPlayer)
-				    this.players[i].script.PlayerShip.__update(dt);
-            }
+			        // network players motion is simulated
+			        if (!players[i].script.PlayerShip.isLocalPlayer)
+			            players[i].script.PlayerShip.__update(dt);
+			    }
+			}
 		},
 		
 		
@@ -539,27 +624,35 @@ pc.script.create('GameManager', function (context) {
 			if (!gd)
 				return;
 
-			//this.players[0].script.PlayerShip.cameraManager.entity.enabled = true;
-
 			var rect = new pc.Vec4();
 			rect.z = gd.width;
 			rect.w = gd.height;
 			
-			if (this.gameMode === window.GameManager.GameMode.SinglePlayer) {
-				if (this.players[0].script.PlayerShip.IsAlive()) {
-					// draw HUB
-					this.DrawHUD(gd, rect, this.players[0].script.PlayerShip.Bars(), 70, 120, !this.players[0].script.PlayerShip.camera3DPerson);
+			var localPlayers = this.FindLocalPlayers();
+			if (localPlayers) {
+			    switch (localPlayers.length) {
+			        case 0:
+			            return;
 
-                    // draw missile count
-				}
-				
-				// draw damage indicator
-				var color = this.players[0].script.PlayerShip.DamageColor();
-				if (color.a > 0) {
-					this.screenManager.FadeScene(gd, color);
-				}
-			} else {
-			}
+			        case 1:
+			            if (localPlayers[0].script.PlayerShip.IsAlive()) {
+			                // draw HUB
+			                this.DrawHUD(gd, rect, localPlayers[0].script.PlayerShip.Bars(), 70, 120, !localPlayers[0].script.PlayerShip.camera3DPerson);
+
+			                // draw missile count
+			            }
+
+			            // draw damage indicator
+			            var color = localPlayers[0].script.PlayerShip.DamageColor();
+			            if (color.a > 0) {
+			                this.screenManager.FadeScene(gd, color);
+			            }
+			            break;
+
+			        case 2:
+			            break;
+			    }
+   			}
 		},
 		
 		
@@ -575,7 +668,7 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        LevelLoaded: function (levelName) {
+        onLevelLoaded: function (levelName) {
 
             var assets = [];
 
@@ -611,12 +704,32 @@ pc.script.create('GameManager', function (context) {
             if (menuCamera)
                 menuCamera.enabled = false;
 
-            var mgr = context.root.findByName('Camera');
-			if (mgr) {
-			    this.players[0].script.PlayerShip.cameraManager = mgr.script.CameraManager;
-			} else {
+            var camera = context.root.findByName('Camera');
+			if (!camera)
                 console.log('Camera not found')
+
+			if (this.players) {
+			    var players = this.players.getChildren();
+			    for (var p = 0; p < players.length; p++) {
+			        players[p].script.PlayerShip.LevelLoaded(levelName);
+			        if (players[p].script.PlayerShip.isLocalPlayer) {
+                        if(camera)
+			                players[p].script.PlayerShip.cameraManager = camera.script.CameraManager;
+			        }
+                }
 			}
+        },
+
+
+        onLevelUnloaded: function () {
+            if (this.players) {
+                var players = this.players.getChildren();
+                for (var p = 0; p < players.length; p++) {
+                    if (players[p].model.model) {
+                        players[p].model.model = null;
+                    }
+                }
+            }
         },
 
 
@@ -634,7 +747,7 @@ pc.script.create('GameManager', function (context) {
                 }
 
                 if (!found) {
-                    this.screenManager.onLoadMenu();
+                    this.screenManager.LoadMenu();
                     return;
                 }
 
@@ -643,7 +756,7 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        onLoadLevel: function (levelEnum) {
+        LoadLevel: function (levelEnum) {
 
             if (window.GameManager.LevelIds && window.GameManager.LevelIds.length > 0) {
 
@@ -657,17 +770,17 @@ pc.script.create('GameManager', function (context) {
                 }
 
                 if (!found) {
-                    this.screenManager.onLoadMenu();
+                    this.screenManager.LoadMenu();
                     return;
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx].name;
-                    this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
+                    this.screenManager.LoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
                 }
             }
         },
 
         
-        onNextLevel: function () {
+        NextLevel: function () {
 
             if (window.GameManager.LevelIds && window.GameManager.LevelIds.length > 0) {
 
@@ -681,17 +794,17 @@ pc.script.create('GameManager', function (context) {
                 }
 
                 if(!found || idx === window.GameManager.LevelIds.length - 1) {
-                    this.screenManager.onLoadMenu();
+                    this.screenManager.LoadMenu();
                     return;
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx+1].name;
-                    this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
+                    this.screenManager.LoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
                 }
             }
         },
 
 
-        onPrevLevel: function () {
+        PrevLevel: function () {
 
             if (window.GameManager.LevelIds && window.GameManager.LevelIds.length > 0) {
 
@@ -705,11 +818,11 @@ pc.script.create('GameManager', function (context) {
                 }
 
                 if (!found || idx === 0) {
-                    this.screenManager.onLoadMenu();
+                    this.screenManager.LoadMenu();
                     return;
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx - 1].name;
-                    this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
+                    this.screenManager.LoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
                 }
             }
         },

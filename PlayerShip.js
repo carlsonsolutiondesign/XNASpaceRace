@@ -5,8 +5,13 @@ pc.script.create('PlayerShip', function (context) {
         this.entity = entity;
         this.cameraManager = null;
 
-        this.localPlayer = true;
+        this.isLocalPlayer = false;
+        this.localId = null;
 		this.playerClient = null;
+
+		this.playerId = null;
+		this.shipId = null;
+		this.spawnedId = null;
 
 		this.updateDT = 0.20;
 		this.nextUpdate = this.updateDT;
@@ -14,9 +19,6 @@ pc.script.create('PlayerShip', function (context) {
 		this.targetPosition = null;
 		this.targetOrientation = null;
 
-		this.playerId = null;
-		this.shipId = null;
-		this.spawnedId = null;
 
         this.shield = 1.0;                                      // current shield charge (1.0 when ready to use)
         this.boost = 1.0;                                       // curren boost charge (1.0 when ready to use)
@@ -25,7 +27,7 @@ pc.script.create('PlayerShip', function (context) {
         this.shieldUse = false;                                 // shield is active flag
         this.boostUse = false;                                  // boost is active flag
 
-        this.deadTime = 0.4;                                    // time left before ship respawn after death
+        this.deadTime = 1.4;                                    // time left before ship respawn after death
 
         this.blaster = 0.0;                                     // blaster charge (1.0 when ready to fire)
         this.missile = 0.0;                                     // missile charge (1.0 when ready to fire)
@@ -53,6 +55,48 @@ pc.script.create('PlayerShip', function (context) {
         },
 
 
+        LevelLoaded: function (levelName) {
+
+            this.entity.setPosition(0.0, 0.0, 0.0);
+            this.entity.setLocalPosition(0.0, 0.0);
+
+            this.entity.setEulerAngles(0.0, 0.0, 0.0);
+            this.entity.setLocalEulerAngles(0.0, 0.0, 0.0);
+
+            this.spawnedId = null;
+
+            this.nextUpdate = this.updateDT;
+
+            this.targetPosition = null;
+            this.targetOrientation = null;
+
+
+            this.shield = 1.0;
+            this.boost = 1.0;
+            this.energy = 1.0;
+
+            this.shieldUse = false;
+            this.boostUse = false;
+
+            this.deadTime = 1.4;
+
+            this.blaster = 0.0;
+            this.missile = 0.0;
+            this.missileCount = 0;
+
+            this.damageTime = 0.0;
+            this.damageColor = new pc.Color(0.0, 0.0, 0.0, 0.0);
+
+            this.score = 0;
+
+            this.camera3DPerson = true;
+
+            this.elapsedTime = 0.0;
+
+            this.simulate = false;
+        },
+
+
         // Called every frame, dt is time in seconds since last update
         Update: function (dt) {
             this.elapsedTime += dt;
@@ -69,12 +113,6 @@ pc.script.create('PlayerShip', function (context) {
 
                     // find respawn point
                     this.Spawn();
-
-                    // reset energy, shield and boost
-                    this.energy = 1.0;
-                    this.shield = 1.0;
-                    this.boost = 1.0;
-                    this.missileCount = 3;
                 }
 
                 return;
@@ -96,6 +134,13 @@ pc.script.create('PlayerShip', function (context) {
 
 		Spawn: function () {
 
+		    // reset energy, shield and boost
+		    this.energy = 1.0;
+		    this.shield = 1.0;
+		    this.boost = 1.0;
+		    this.missileCount = 3;
+
+            // find spawn point
 		    this.targetPosition = null;
 		    this.targetOrientation = null;
 
@@ -111,7 +156,7 @@ pc.script.create('PlayerShip', function (context) {
 
 			        var asset = context.assets.getAssetById(this.shipId);
 			        context.assets.load(asset).then(function (resources) {
-			            this.entity.model.model = resources[0];
+			            this.entity.model.model = resources[0].clone();
 			        }.bind(this));
 			    }
 
