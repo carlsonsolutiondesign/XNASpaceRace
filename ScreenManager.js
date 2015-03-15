@@ -571,7 +571,7 @@ pc.script.create('ScreenManager', function (context) {
 
                     pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
 
-                    self.fire('LevelLoaded');
+                    self.fire('LevelLoaded', self.currentLevelPack.name);
                 });
             }
         },
@@ -583,12 +583,20 @@ pc.script.create('ScreenManager', function (context) {
                 this.currentLevelPack.hierarchy.destroy(context.systems);
                 this.currentLevelPack = null;
             }
+
+            var menuCamera = context.root.findByName('MenuCamera');
+            if (menuCamera)
+                menuCamera.enabled = true;
         },
 
 
         onLoadMenu: function () {
             this._unloadLevel();
             this._loadLevel(window.ScreenManager.Menu.id);
+
+            var menuCamera = context.root.findByName('MenuCamera');
+            if (menuCamera)
+                menuCamera.enabled = true;
         },
 
 

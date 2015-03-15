@@ -345,7 +345,6 @@ pc.script.create('PlayerScreen', function (context) {
                 else
                     this.gameManager.SetShips(this.shipModels[this.selection[0]], this.shipModels[this.selection[1]], this.invertY);
                     
-                this.realShipModels = [];
                 this.screenManager.SetNextScreen(ScreenManager.ScreenType.LevelScreen);
             }
         },

@@ -278,7 +278,19 @@ pc.script.create('GameManager', function (context) {
 			
 			// otherwise remove network player if found in list
 			for (var i = 1; i < this.players.length; i++) {
-				if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
+			    if (this.players[i].script.PlayerShip.playerId === msg.playerId) {
+			        // remove player from Players node
+			        var playerNode = context.root.findByName('Players');
+			        if (playerNode) {
+			            var players = playerNode.getChildren();
+			            for (var p = 0; p < players.length; p++) {
+			                if (players[p].script.PlayerShip.playerId == msg.PlayerId) {
+			                    players.removeChild(players[p]);
+			                    break;
+			                }
+			            }
+			        }
+
 					this.players.splice(i, 1);
 					return;
 				}
@@ -353,7 +365,16 @@ pc.script.create('GameManager', function (context) {
 			player.script.PlayerShip.playerId = playerId
             player.script.PlayerShip.shipId = 0;
 
-            this.root.addChild(player);
+            var playerNode = context.root.findByName('Players');
+            if (!playerNode) {
+                var entity = new pc.Entity();
+                entity.name = 'Players';
+                context.root.addChild(entity);
+
+                playerNode = entity;
+            }
+            
+            playerNode.addChild(player);
 
             return player;
 		},
@@ -517,7 +538,9 @@ pc.script.create('GameManager', function (context) {
 			
 			if (!gd)
 				return;
-			
+
+			//this.players[0].script.PlayerShip.cameraManager.entity.enabled = true;
+
 			var rect = new pc.Vec4();
 			rect.z = gd.width;
 			rect.w = gd.height;
@@ -536,7 +559,6 @@ pc.script.create('GameManager', function (context) {
 					this.screenManager.FadeScene(gd, color);
 				}
 			} else {
-
 			}
 		},
 		
@@ -553,7 +575,7 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        LevelLoaded: function () {
+        LevelLoaded: function (levelName) {
 
             var assets = [];
 
@@ -585,14 +607,16 @@ pc.script.create('GameManager', function (context) {
                 this.realHUDBarsTexture = resources[4];
             }.bind(this));
 			
-			var mgr = context.root.findByName('Camera');
-			if (mgr)
-				this.players[0].script.PlayerShip.cameraManager = mgr.script.CameraManager;
+            var menuCamera = context.root.findByName('MenuCamera');
+            if (menuCamera)
+                menuCamera.enabled = false;
 
-            //var asset = context.assets.getAssetById(this.players[0].script.PlayerShip.shipId);
-            //context.assets.load(asset).then(function (resources){
-            //    this.players[0].script.PlayerShip.shipModel = resources[0];
-            //}.bind(this));
+            var mgr = context.root.findByName('Camera');
+			if (mgr) {
+			    this.players[0].script.PlayerShip.cameraManager = mgr.script.CameraManager;
+			} else {
+                console.log('Camera not found')
+			}
         },
 
 
@@ -662,8 +686,6 @@ pc.script.create('GameManager', function (context) {
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx+1].name;
                     this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
-
-                    this.LoadAssets();
                 }
             }
         },
@@ -688,8 +710,6 @@ pc.script.create('GameManager', function (context) {
                 } else {
                     this.currentLevel = window.GameManager.LevelIds[idx - 1].name;
                     this.screenManager.onLoadLevel(window.GameManager.LevelIds[this.currentLevel].id);
-
-                    this.LoadAssets();
                 }
             }
         },

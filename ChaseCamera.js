@@ -50,19 +50,22 @@ pc.script.create('ChaseCamera', function (context) {
         },
 
 
-        setChaseEntity: function(cameraOffsetEntity) {
+        setChaseEntity: function(target) {
 
-            this.target = cameraOffsetEntity.getParent();
-
-            // Desired Camera Position Variables
-            this.desiredPositionOffset = new pc.Vec3().copy(cameraOffsetEntity.getPosition());
+            this.target = target;
+            this.desiredPositionOffset = new pc.Vec3();
             this.desiredPosition = new pc.Vec3();
 
             this.lookAtOffset = new pc.Vec3();
             this.lookAt = new pc.Vec3();
 
+            var cameraOffset = target.findByName('CameraOffset');
+            if (cameraOffset) {
+                var localPos = cameraOffset.getLocalPosition();
+                this.desiredPositionOffset.set(localPos.x, localPos.y, localPos.z);
+            }
+
             this.camera = context.root.findByName(this.cameraName);
-            
             if (this.camera) {
                 this.updateWorldPositions();
                 this.camera.setPosition(this.desiredPosition);
@@ -72,6 +75,9 @@ pc.script.create('ChaseCamera', function (context) {
         
         // Called every frame, dt is time in seconds since last update
         update: function (dt) {
+
+            if (!this.target || !this.camera)
+                return;
 
             this.updateWorldPositions();
 

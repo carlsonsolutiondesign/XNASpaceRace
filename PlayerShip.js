@@ -99,8 +99,11 @@ pc.script.create('PlayerShip', function (context) {
 		    this.targetPosition = null;
 		    this.targetOrientation = null;
 
-		    var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
-		    if (playerSpawnPoint) {
+		    var spawnCameraOffset = null;
+		    var spawnPoint = context.root.findByName('Ship.Spawn.01');
+		    if (spawnPoint) {
+
+		        spawnCameraOffset = spawnPoint.findByName('Ship.01.Camera');
 
 		        // if the model is not loaded or the player changed ship load the new model
 			    if (!this.spawnedId || this.spawnedId != this.shipId) {
@@ -112,8 +115,8 @@ pc.script.create('PlayerShip', function (context) {
 			        }.bind(this));
 			    }
 
-			    this.entity.setPosition(playerSpawnPoint.getPosition());
-				this.entity.setEulerAngles(playerSpawnPoint.getEulerAngles());
+			    this.entity.setPosition(spawnPoint.getPosition());
+				this.entity.setEulerAngles(spawnPoint.getEulerAngles());
 			}
 
 			if (this.playerClient) {
@@ -121,14 +124,19 @@ pc.script.create('PlayerShip', function (context) {
 			}
 			
 			if(this.cameraManager) {
-				var cameraOffset = context.root.findByName('Ship.01.Camera');
-				if (cameraOffset) {
-					var camera = this.entity.findByName('CameraOffset');
-					if (camera) {
-						camera.setPosition(cameraOffset.getPosition());
-						camera.setEulerAngles(cameraOffset.getEulerAngles());
-						this.cameraManager.setCamera(camera.name);
-					}
+				if (spawnCameraOffset) {
+				    var entityOffset = this.entity.findByName('CameraOffset');
+				    if (entityOffset) {
+				        entityOffset.setLocalPosition(spawnCameraOffset.getLocalPosition());
+				        entityOffset.setLocalRotation(spawnCameraOffset.getLocalRotation());
+
+				        var camera = context.root.findByName('Camera');
+				        if (camera) {
+				            camera.setPosition(spawnCameraOffset.getPosition());
+				            camera.setRotation(spawnCameraOffset.getRotation());
+				            this.cameraManager.setCamera(this.entity.name);
+				        }
+				    }
 				}
 	        }
         },
