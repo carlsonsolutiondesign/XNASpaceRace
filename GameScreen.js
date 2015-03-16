@@ -8,6 +8,9 @@ pc.script.create('GameScreen', function (context) {
         this.screenManager = null;
         this.gameManager = null;
         this.soundManager = null;
+
+        this.exitGameScreen = false;
+        this.localPlayers = null;
     };
 
 
@@ -19,56 +22,84 @@ pc.script.create('GameScreen', function (context) {
             this.screenManager = this.root.script.ScreenManager;
             this.gameManager = this.root.script.GameManager;
             this.soundManager = this.root.script.SoundManager;
+
+            this.exitGameScreen = false;
+            this.localPlayers = null;
         },
         
         
         SetFocus: function (focus) {
             if (focus) {
-                this.gameManager.onLoadLevel(this.gameManager.currentLevel);
+                this.exitGameScreen = false;
+                this.localPlayers = this.gameManager.FindLocalPlayers();
+                this.gameManager.LoadLevel(this.gameManager.currentLevel);
             } else {
+                this.exitGameScreen = true;
+                this.localPlayers = null;
             }
         },
         
         
         ProcessInput: function (dt, inputManager) {
 
-            if (!inputManager)
+            if (!inputManager || this.exitGameScreen)
                 return;
 
             this.gameManager.ProcessInput(dt, inputManager);
 
-            for (var i = 0; i < this.gameManager.gameMode; i++) {
+            for (var i = 0; i < this.localPlayers.length; i++) {
+                if (inputManager.WasRightShoulderPressed(i) || inputManager.WasKeyPressed(i, pc.KEY_PAGE_UP)) {
+                    this.gameManager.StartSimulation('xnaspacerace.ship.01.simulation.log');
+                }
+                if (inputManager.WasLeftShoulderPressed(i) || inputManager.WasKeyPressed(i, pc.KEY_PAGE_DOWN)) {
+                    this.gameManager.StartSimulation('xnaspacerace.ship.02.simulation.log');
+                }
+
                 if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBackButtonPressed(i)) {
 
-                    var player = this.gameManager.GetPlayer(i);
+                    var player = this.localPlayers[i].script.PlayerShip;
                     if (player) {
                         player.score = -1;
                     }
 
-                    this.screenManager.SetNextScreen(ScreenManager.ScreenType.EndScreen);
-                    this.screenManager._unloadLevel();
-                    this.soundManager.PlaySound(SoundManager.Sound.MenuCancel);
+                    this.ExitGame();
                 }
             }
         },
         
         
         Update: function (dt) {
+            if (this.exitGameScreen)
+                return;
+
             this.gameManager.Update(dt);
 
-            for (var i = 0; i < this.gameManager.gameMode; i++) {
-                var player = this.gameManager.GetPlayer(i);
+            for (var i = 0; i < this.localPlayers.length; i++) {
+                var player = this.localPlayers[i].script.PlayerShip;
 
                 if (player && player.score >= GameOptions.MaxPoints) {
-                    this.screenManager.SetNextScreen(ScreenManager.ScreneType.EndScreen, GameOptions.FadeColor, GameOptions.FadeTime);
+                    this.ExitGame();
                 }
             }
         },
         
         
+        ExitGame: function () {
+            this.exitGameScreen = true;
+
+            var camera = context.root.findByName('Camera');
+            if (camera)
+                camera.enabled = false;
+
+            this.screenManager.UnloadLevel();
+            this.screenManager.SetNextScreen(ScreenManager.ScreenType.EndScreen, GameOptions.FadeColor, GameOptions.FadeTime);
+            this.soundManager.PlaySound(SoundManager.Sound.MenuCancel);
+        },
+
+
         Draw3D: function (gd) {
 
-            if (!gd)
+            if (!gd || this.exitGameScreen)
                 return;
 
             this.gameManager.Draw3D(gd);
@@ -77,7 +108,7 @@ pc.script.create('GameScreen', function (context) {
         
         Draw2D: function (gd, fontManager) {
 
-            if (!gd)
+            if (!gd || this.exitGameScreen)
                 return;
 
             this.gameManager.Draw2D(gd);
