@@ -16,8 +16,8 @@ pc.script.create('PlayerShip', function (context) {
 		this.updateDT = 0.20;
 		this.nextUpdate = this.updateDT;
 
-		this.targetPosition = null;
-		this.targetOrientation = null;
+		this.targetPositions = [];
+		this.targetOrientations = [];
 
 
         this.shield = 1.0;                                      // current shield charge (1.0 when ready to use)
@@ -67,8 +67,8 @@ pc.script.create('PlayerShip', function (context) {
 
             this.nextUpdate = this.updateDT;
 
-            this.targetPosition = null;
-            this.targetOrientation = null;
+            this.targetPositions = [];
+            this.targetOrientations = [];
 
 
             this.shield = 1.0;
@@ -141,8 +141,8 @@ pc.script.create('PlayerShip', function (context) {
 		    this.missileCount = 3;
 
             // find spawn point
-		    this.targetPosition = null;
-		    this.targetOrientation = null;
+		    this.targetPositions = [];
+		    this.targetOrientations = [];
 
 		    var spawnCameraOffset = null;
 		    var spawnPoint = context.root.findByName('Ship.Spawn.01');
@@ -193,36 +193,36 @@ pc.script.create('PlayerShip', function (context) {
 		        return;
 
 		    // lerp from current position to target position
-		    if (this.targetPosition) {
+		    if (this.targetPositions && this.targetPositions.length > 0) {
 
 		        var lerpEpsilon = 0.0001;
 
 		        var pos = this.entity.getPosition();
 		        var dpos = new pc.Vec3().copy(pos);
-		        dpos.sub(this.targetPosition);
+		        dpos.sub(this.targetPositions[0]);
 
 		        if (dpos.lengthSq() > lerpEpsilon) {
-		            pos.lerp(pos, this.targetPosition, dt);
+		            pos.lerp(pos, this.targetPositions[0], dt);
 		            this.entity.setPosition(pos);
 		        } else {
-		            this.targetPosition = null;
+		            this.targetPositions.splice(0, 1);
 		        }
 		    }
 
-		    if (this.targetOrientation) {
+		    if (this.targetOrientations && this.targetOrientations.length > 0) {
 
 		        var slerpEpsilon = 0.001;
 
 		        var angles = this.entity.getEulerAngles();
 		        var q1 = new pc.Quat().setFromEulerAngles(angles.x, angles.y, angles.z);
-		        var q2 = new pc.Quat().setFromEulerAngles(this.targetOrientation.x, this.targetOrientation.y, this.targetOrientation.z);
+		        var q2 = new pc.Quat().setFromEulerAngles(this.targetOrientations[0].x, this.targetOrientations[0].y, this.targetOrientations[0].z);
 		        var q3 = new pc.Quat().slerp(q1, q2, dt);
 
 		        //if (q3.lengthSq() > slerpEpsilon) {
 		        if (true) {
 		            this.entity.setEulerAngles(q3.getEulerAngles());
 		        } else {
-		            this.targetOrientation = null;
+		            this.targetOrientations.splice(0, 1);
 		        }
 		    }
 		},
@@ -230,8 +230,8 @@ pc.script.create('PlayerShip', function (context) {
 
 		SvrUpdate: function (position, orientation) {
 
-		    this.targetPosition = position;
-		    this.targetOrientation = orientation;
+		    this.targetPositions.push(position);
+		    this.targetOrientations.push(orientation);
 
 		    this.__update(0.033);
 		},
