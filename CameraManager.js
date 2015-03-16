@@ -68,8 +68,8 @@ pc.script.create('CameraManager', function (context) {
 
             this.camera = context.root.findByName(this.cameraName);
             
-            this.cameraIndex = this.findCameraByName(this.startingCameraName);
-			this.setCamera(this.cameraList[this.cameraIndex].name);
+            //this.cameraIndex = this.findCameraByName(this.startingCameraName);
+			//this.setCamera(this.cameraList[this.cameraIndex].name);
 			
 			// temporary override until the online project can be updated
 			this.lockCamera = true;
@@ -139,7 +139,7 @@ pc.script.create('CameraManager', function (context) {
                 }
 
                 var dA = this.itsAngularVelocity * dt;
-                this.target.getParent().rotateLocal(-(dA * ey), -(dA * ex), dA * ez);
+                this.target.rotateLocal(-(dA * ey), -(dA * ex), dA * ez);
 
                 var dx = context.gamepads.getAxis(pc.input.PAD_1, pc.PAD_L_STICK_X);
                 var dz = context.gamepads.getAxis(pc.input.PAD_1, pc.PAD_L_STICK_Y);
@@ -166,7 +166,7 @@ pc.script.create('CameraManager', function (context) {
                 }
 
 
-                this.target.getParent().translateLocal(this.itsLinearVelocity * dt * dx, this.itsRateOfAscension * dy, this.itsLinearVelocity * dt * dz);
+                this.target.translateLocal(this.itsLinearVelocity * dt * dx, this.itsRateOfAscension * dy, this.itsLinearVelocity * dt * dz);
             }
         },
         

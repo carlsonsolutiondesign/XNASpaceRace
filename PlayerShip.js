@@ -3,18 +3,22 @@ pc.script.create('PlayerShip', function (context) {
     // Creates a new PlayerShip instance
     var PlayerShip = function (entity) {
         this.entity = entity;
-		this.cameraManager = null;
+        this.cameraManager = null;
+
+        this.isLocalPlayer = false;
+        this.localId = null;
 		this.playerClient = null;
 
-		this.moveDT = 0.100;
-		this.nextMove = this.moveDT;
-
-		this.targetPos = null;
-		this.targetOrientation = null;
-
 		this.playerId = null;
-        this.index = 0;
-        this.shipId = null;
+		this.shipId = null;
+		this.spawnedId = null;
+
+		this.updateDT = 0.20;
+		this.nextUpdate = this.updateDT;
+
+		this.targetPositions = [];
+		this.targetOrientations = [];
+
 
         this.shield = 1.0;                                      // current shield charge (1.0 when ready to use)
         this.boost = 1.0;                                       // curren boost charge (1.0 when ready to use)
@@ -23,7 +27,7 @@ pc.script.create('PlayerShip', function (context) {
         this.shieldUse = false;                                 // shield is active flag
         this.boostUse = false;                                  // boost is active flag
 
-        this.deadTime = 0.4;                                    // time left before ship respawn after death
+        this.deadTime = 1.4;                                    // time left before ship respawn after death
 
         this.blaster = 0.0;                                     // blaster charge (1.0 when ready to fire)
         this.missile = 0.0;                                     // missile charge (1.0 when ready to fire)
@@ -32,11 +36,9 @@ pc.script.create('PlayerShip', function (context) {
         this.damageTime = 0.0;                                  // time left showing damage screen 
         this.damageColor = new pc.Color(0.0, 0.0, 0.0, 0.0);    // current damage screen color
 
-        this.playerIndex = 0;                                   // the player index for this ship
         this.score = 0;                                         // the player current score
 
         this.camera3DPerson = true;
-        this.shipModel = null;                                  // player ship model
 
         this.elapsedTime = 0.0;
 
@@ -50,6 +52,48 @@ pc.script.create('PlayerShip', function (context) {
 
         // Called once after all resources are loaded and before the first update
         initialize: function () {
+        },
+
+
+        LevelLoaded: function (levelName) {
+
+            this.entity.setPosition(0.0, 0.0, 0.0);
+            this.entity.setLocalPosition(0.0, 0.0);
+
+            this.entity.setEulerAngles(0.0, 0.0, 0.0);
+            this.entity.setLocalEulerAngles(0.0, 0.0, 0.0);
+
+            this.spawnedId = null;
+
+            this.nextUpdate = this.updateDT;
+
+            this.targetPositions = [];
+            this.targetOrientations = [];
+
+
+            this.shield = 1.0;
+            this.boost = 1.0;
+            this.energy = 1.0;
+
+            this.shieldUse = false;
+            this.boostUse = false;
+
+            this.deadTime = 1.4;
+
+            this.blaster = 0.0;
+            this.missile = 0.0;
+            this.missileCount = 0;
+
+            this.damageTime = 0.0;
+            this.damageColor = new pc.Color(0.0, 0.0, 0.0, 0.0);
+
+            this.score = 0;
+
+            this.camera3DPerson = true;
+
+            this.elapsedTime = 0.0;
+
+            this.simulate = false;
         },
 
 
@@ -69,12 +113,6 @@ pc.script.create('PlayerShip', function (context) {
 
                     // find respawn point
                     this.Spawn();
-
-                    // reset energy, shield and boost
-                    this.energy = 1.0;
-                    this.shield = 1.0;
-                    this.boost = 1.0;
-                    this.missileCount = 3;
                 }
 
                 return;
@@ -85,25 +123,49 @@ pc.script.create('PlayerShip', function (context) {
 			}
 
 			if (this.playerClient) {
-				this.nextMove -= dt;
-				if (this.nextMove <= 0.0) {
-					this.nextMove = this.moveDT;
+				this.nextUpdate -= dt;
+				if (this.nextUpdate <= 0.0) {
+					this.nextUpdate = this.updateDT;
 					this.playerClient.fire('ClientUpdate', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 				}
 			}
         },
 
 
-		Spawn: function () {
+        FindSpawnPoint: function () {
+        },
 
-		    this.targetPos = null;
-		    this.targetOrientation = null;
 
-		    var playerSpawnPoint = context.root.findByName('Ship.Spawn.01');
-			if (playerSpawnPoint) {
-				this.entity.model.model = this.shipModel;
-				this.entity.setPosition(playerSpawnPoint.getPosition());
-				this.entity.setEulerAngles(playerSpawnPoint.getEulerAngles());
+        Spawn: function () {
+
+		    // reset energy, shield and boost
+		    this.energy = 1.0;
+		    this.shield = 1.0;
+		    this.boost = 1.0;
+		    this.missileCount = 3;
+
+            // find spawn point
+		    this.targetPositions = [];
+		    this.targetOrientations = [];
+
+		    var spawnCameraOffset = null;
+		    var spawnPoint = context.root.findByName('Ship.Spawn.01');
+		    if (spawnPoint) {
+
+		        spawnCameraOffset = spawnPoint.findByName('Ship.01.Camera');
+
+		        // if the model is not loaded or the player changed ship load the new model
+			    if (!this.spawnedId || this.spawnedId != this.shipId) {
+			        this.spawnedId = this.shipId;
+
+			        var asset = context.assets.getAssetById(this.shipId);
+			        context.assets.load(asset).then(function (resources) {
+			            this.entity.model.model = resources[0].clone();
+			        }.bind(this));
+			    }
+
+			    this.entity.setPosition(spawnPoint.getPosition());
+				this.entity.setEulerAngles(spawnPoint.getEulerAngles());
 			}
 
 			if (this.playerClient) {
@@ -111,45 +173,71 @@ pc.script.create('PlayerShip', function (context) {
 			}
 			
 			if(this.cameraManager) {
-				var cameraOffset = context.root.findByName('Ship.01.Camera');
-				if (cameraOffset) {
-					var camera = this.entity.findByName('CameraOffset');
-					if (camera) {
-						camera.setPosition(cameraOffset.getPosition());
-						camera.setEulerAngles(cameraOffset.getEulerAngles());
-						this.cameraManager.setCamera(camera.name);
-					}
+				if (spawnCameraOffset) {
+				    var entityOffset = this.entity.findByName('CameraOffset');
+				    if (entityOffset) {
+				        entityOffset.setLocalPosition(spawnCameraOffset.getLocalPosition());
+				        entityOffset.setLocalRotation(spawnCameraOffset.getLocalRotation());
+
+				        var camera = context.root.findByName('Camera');
+				        if (camera) {
+				            camera.setPosition(spawnCameraOffset.getPosition());
+				            camera.setRotation(spawnCameraOffset.getRotation());
+				            this.cameraManager.setCamera(this.entity.name);
+				        }
+				    }
 				}
 	        }
         },
 
-		
-		SvrUpdate: function (position, orientation) {
 
-		    // lerp from current position to target position @ 160ms
-		    if (this.targetPos) {
+		__update: function (dt) {
 
-		        var epsilon = 0.0001;
+		    if (!this.IsAlive())
+		        return;
+
+		    // lerp from current position to target position
+		    if (this.targetPositions && this.targetPositions.length > 0) {
+
+		        var lerpEpsilon = 0.0001;
 
 		        var pos = this.entity.getPosition();
-
 		        var dpos = new pc.Vec3().copy(pos);
-		        dpos.sub(this.targetPos);
+		        dpos.sub(this.targetPositions[0]);
 
-		        if (dpos.lengthSq() > epsilon) {
-		            pos.lerp(pos, this.targetPos, 0.16);
+		        if (dpos.lengthSq() > lerpEpsilon) {
+		            pos.lerp(pos, this.targetPositions[0], dt);
 		            this.entity.setPosition(pos);
-
-		            this.entity.setEulerAngles(orientation);
 		        } else {
-		            position = null;
-		            orientation = null;
+		            this.targetPositions.splice(0, 1);
 		        }
-
 		    }
 
-			this.targetPos = position;
-			this.targetOrientation = orientation;
+		    if (this.targetOrientations && this.targetOrientations.length > 0) {
+
+		        var slerpEpsilon = 0.001;
+
+		        var angles = this.entity.getEulerAngles();
+		        var q1 = new pc.Quat().setFromEulerAngles(angles.x, angles.y, angles.z);
+		        var q2 = new pc.Quat().setFromEulerAngles(this.targetOrientations[0].x, this.targetOrientations[0].y, this.targetOrientations[0].z);
+		        var q3 = new pc.Quat().slerp(q1, q2, dt);
+
+		        //if (q3.lengthSq() > slerpEpsilon) {
+		        if (true) {
+		            this.entity.setEulerAngles(q3.getEulerAngles());
+		        } else {
+		            this.targetOrientations.splice(0, 1);
+		        }
+		    }
+		},
+
+
+		SvrUpdate: function (position, orientation) {
+
+		    this.targetPositions.push(position);
+		    this.targetOrientations.push(orientation);
+
+		    this.__update(0.033);
 		},
 
 		

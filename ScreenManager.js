@@ -571,30 +571,41 @@ pc.script.create('ScreenManager', function (context) {
 
                     pc.fw.ComponentSystem.initialize(self.currentLevelPack.hierarchy);
 
-                    self.fire('LevelLoaded');
+                    self.fire('LevelLoaded', self.currentLevelPack.name);
                 });
             }
         },
 
 
-        _unloadLevel: function () {
+        UnloadLevel: function () {
 
             if (this.currentLevelPack) {
+                var name = this.currentLevelPack.name;
                 this.currentLevelPack.hierarchy.destroy(context.systems);
                 this.currentLevelPack = null;
+
+                this.fire('LevelUnloaded', name);
             }
+
+            var menuCamera = context.root.findByName('MenuCamera');
+            if (menuCamera)
+                menuCamera.enabled = true;
         },
 
 
-        onLoadMenu: function () {
-            this._unloadLevel();
+        LoadMenu: function () {
+            this.UnloadLevel();
             this._loadLevel(window.ScreenManager.Menu.id);
+
+            var menuCamera = context.root.findByName('MenuCamera');
+            if (menuCamera)
+                menuCamera.enabled = true;
         },
 
 
-        onLoadLevel: function (levelId) {
+        LoadLevel: function (levelId) {
             if (levelId) {
-                this._unloadLevel();
+                this.UnloadLevel();
                 this._loadLevel(levelId);
             }
         }

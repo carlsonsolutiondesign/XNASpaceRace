@@ -502,41 +502,6 @@ pc.script.create('PlayerScreen', function (context) {
             } else {
             }
         },
-
-
-        setLookAt: function (pos, target, upDir) {
-
-            var forward = new pc.Vec3().sub2(pos, target).normalize();
-            var left    = new pc.Vec3().cross(upDir, forward).normalize();
-            var up      = new pc.Vec3().cross(forward, left).normalize();
-
-            // set inverse translation matrix: Mt
-            var matTrans = new pc.Mat4();
-            matTrans.data[0]  = matTrans.data[5] = matTrans.data[10] = matTrans.data[15] = 1.0;
-            matTrans.data[3]  = -pos.x;
-            matTrans.data[7]  = -pos.y;
-            matTrans.data[11] = -pos.z;
-
-            // set inverse of rotation matrix: Mr
-            // NOTE: M^-1 = M^T if it is Euclidean transform
-            var matRot = new pc.Mat4();
-            matRot.data[0]  = left.x;     matRot.data[4] = left.y;     matRot.data[8]  = left.z;
-            matRot.data[1]  = up.x;       matRot.data[5] = up.y;       matRot.data[9]  = up.z;
-            matRot.data[2]  = forward.x;  matRot.data[6] = forward.y;  matRot.data[10] = forward.z;
-            matRot.data[15] = 1.0;
-
-            var invPos = new pc.Vec3().copy(pos);
-            invPos.scale(-1);
-
-            // compute M = Mr * Mt
-            var m = new pc.Mat4();
-            m.data[0] = left.x;     m.data[4] = left.y;     m.data[8] = left.z;      m.data[12] = left.dot(invPos);
-            m.data[1] = up.x;       m.data[5] = up.y;       m.data[9] = up.z;        m.data[13] = up.dot(invPos);
-            m.data[2] = forward.x;  m.data[6] = forward.y;  m.data[10] = forward.z;  m.data[14] = forward.dot(invPos);
-            m.data[3] = 0.0;        m.data[7] = 0.0;        m.data[11] = 0.0;        m.data[15] = 1.0;
-
-            return m;
-        }
     };
 
     return PlayerScreen;

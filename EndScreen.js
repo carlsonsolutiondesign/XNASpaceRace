@@ -1,9 +1,3 @@
-pc.script.attribute('shipModels', 'asset', [],
-{
-    type: 'model',
-    max: 2
-});
-
 pc.script.attribute('padModel', 'asset', [],
 {
     type: 'model',
@@ -77,18 +71,15 @@ pc.script.create('EndScreen', function (context) {
                 var winner = this.gameManager.GetWinner();
 
                 var assets = [];
+                assets[0] = context.assets.getAssetById(winner.ShipId);
+                assets[1] = context.assets.getAssetById(this.padModel);
+                assets[2] = context.assets.getAssetById(this.padHaloModel);
+                assets[4] = context.assets.getAssetById(this.continueTexture);
+
                 if (winner.Winner === 0) {
-                    assets[0] = context.assets.getAssetById(winner.ShipId);
-                    assets[1] = context.assets.getAssetById(this.padModel);
-                    assets[2] = context.assets.getAssetById(this.padHaloModel);
                     assets[3] = context.assets.getAssetById(this.playerWinTextures[0]);
-                    assets[4] = context.assets.getAssetById(this.continueTexture);
                 } else {
-                    assets[0] = context.assets.getAssetById(winner.ShipId);
-                    assets[1] = context.assets.getAssetById(this.padModel);
-                    assets[2] = context.assets.getAssetById(this.padHaloModel);
                     assets[3] = context.assets.getAssetById(this.playerWinTextures[1]);
-                    assets[4] = context.assets.getAssetById(this.continueTexture);
                 }
 
                 context.assets.load(assets).then(function (resources) {
