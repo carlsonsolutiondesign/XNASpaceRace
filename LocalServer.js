@@ -13,8 +13,18 @@ var port = process.env.PORT || 51000;
 var metaServer = "http://xnaspacerace-44001.onmodulus.net";
 var Client = require('node-rest-client').Client;
 var client = new Client();
-
 app.use(express.static(__dirname));
+var router = express.Router();
+router.route('/servers')
+	.get(function(req, res) {
+		client.get(metaServer+"/api/servers/", function(gameServers, response){
+			console.log(gameServers);
+			res.json(JSON.parse(gameServers));
+		});
+	});
+app.use('/api', router);
+
+
 
 http.listen(port, function () {
     console.log('listening on *:' + port);
