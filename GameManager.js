@@ -341,6 +341,7 @@ pc.script.create('GameManager', function (context) {
 
 		    if (player) {
 		        this.players.removeChild(player);
+		        player.destroy();
 			}
 		},		
 		
@@ -421,7 +422,7 @@ pc.script.create('GameManager', function (context) {
 		        filename = 'xnaspacerace.simulation.log';
 
 		    if (typeof filters === 'undefined') {
-		        filters = ['ServerSpawn', 'ServerUpdate'];
+		        filters = ['ServerSpawn', 'ServerUpdate', 'ServerQuit'];
 		    }
 		    this.playerClient.fire('ClientSimulate', filename, filters);
 		},
@@ -433,8 +434,10 @@ pc.script.create('GameManager', function (context) {
                 // remove player two
                 if(localPlayers) {
                     for (var i = 0; i < localPlayers.length; i++){
-                        if(localPlayers[i].script.PlayerShip.localId === window.GameManager.PlayerId.PlayerTwo)
+                        if (localPlayers[i].script.PlayerShip.localId === window.GameManager.PlayerId.PlayerTwo) {
                             this.players.removeChild(localPlayers[i]);
+                            localPlayers[i].destroy();
+                        }
                     }
                 }
             }

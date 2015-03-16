@@ -132,7 +132,11 @@ pc.script.create('PlayerShip', function (context) {
         },
 
 
-		Spawn: function () {
+        FindSpawnPoint: function () {
+        },
+
+
+        Spawn: function () {
 
 		    // reset energy, shield and boost
 		    this.energy = 1.0;

@@ -148,10 +148,17 @@ AppServer.prototype.ClientUpdate = function (socket, packet) {
 	
 	
 AppServer.prototype.ClientQuit = function (socket, packet) {
-	
-	log.write(log.debugLevel.ClientQuit, socket.client.id);
 
-	console.log(packet);
+	log.write(log.debugLevel.ClientUpdate, socket.client.id);
+
+	var response = {
+		playerId: socket.client.id,
+		playerNumber: appServer.thePlayers[socket.client.id].playerNumber
+	};
+	this.AppendMessage('ServerQuit', response);
+
+	this.oldplayers[socket.client.id] = appServer.thePlayers[socket.client.id];
+	delete this.thePlayers[socket.client.id];
 }
 
 
@@ -224,7 +231,7 @@ io.on('connection', function (socket) {
         if (appServer.thePlayers[socket.client.id]) {
             appServer.ClientSpawn(socket, packet);
         } else {
-			log.write(log.debugLevel.UnrecognizedClient, +socket.client.id);
+			log.write(log.debugLevel.UnrecognizedClient, socket.client.id);
 			socket.disconnect();
         }
     });
@@ -234,14 +241,19 @@ io.on('connection', function (socket) {
         if (appServer.thePlayers[socket.client.id]) {
             appServer.ClientUpdate(socket, packet);
         } else {
-			log.write(log.debugLevel.UnrecognizedClient, +socket.client.id);
+			log.write(log.debugLevel.UnrecognizedClient, socket.client.id);
 			socket.disconnect();
         }
     });
 
 	
 	socket.on('ClientQuit', function (packet) {
-        appServer.ClientQuit(socket, packet);
+		if (appServer.thePlayers[socket.client.id]) {
+			appServer.ClientQuit(socket, packet);
+		} else {
+			log.write(log.debugLevel.UnrecognizedClient, socket.client.id);
+			socket.disconnect();
+		}
     });
 
 	
@@ -295,22 +307,16 @@ io.on('connection', function (socket) {
 		} catch (err) {
 			console.log('ClientSimulate error: ' + err.message);
 		}
-
 	});
 
 
-	socket.on('disconnect', function () {
+	socket.on('disconnect', function (packet) {
 		log.write(log.debugLevel.Disconnect, socket.client.id);
 
-        if (appServer.thePlayers[socket.client.id]) {
-            var response = {
-                playerId: socket.client.id,
-                playerNumber: appServer.thePlayers[socket.client.id].playerNumber
-            };
-			appServer.AppendMessage('ServerQuit', response);
-
-            appServer.oldplayers[socket.client.id] = appServer.thePlayers[socket.client.id];
-            delete appServer.thePlayers[socket.client.id];
-        }
+		if (appServer.thePlayers[socket.client.id]) {
+			appServer.ClientQuit(socket, packet);
+		} else {
+			log.write(log.debugLevel.UnrecognizedClient, socket.client.id);
+		}
     });
 });
