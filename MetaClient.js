@@ -1,4 +1,4 @@
-$.get('http://xnaspacerace-44001.onmodulus.net:80/api/servers/', function(gameServers) {
+$.get('/api/servers/', function(gameServers) {
 	    // build table headers
 	    var columnSet = [];
 	    var headerTr$ = $('<tr/>');
