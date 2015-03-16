@@ -45,7 +45,7 @@ AppServer.prototype.ReportPlayers = function (socket) {
 	this.AppendMessage('ServerMessage', "The game has " + numPlayers + " player" + (numPlayers > 1 ? "s." : "."));
 
 	var uri = socket.handshake.headers.referer;
-	var hostIndex =uri.indexOf("//")+2;
+	var hostIndex = uri.indexOf("//")+2;
 	var trailing = uri.indexOf("/", hostIndex)-hostIndex;
 	var hostport = uri.substr(hostIndex, trailing);
 	var portIndex = -1;
