@@ -22,9 +22,12 @@ pc.script.create('MetaServer', function (context) {
 		this.express = require('express');
 		this.app = this.express();
 		this.http = require('http').Server(this.app);
+/*
 		this.io = require('socket.io')(this.http);
+*/
 		this.app.use(express.static(__dirname));
 
+/*
 		// set up a socket io server
 		this.io.on('connection', function (socket) {
 			socket.on('GameServerStats', function () {
@@ -37,6 +40,7 @@ pc.script.create('MetaServer', function (context) {
 				MetaServer.prototype.ClientDisconnect(socket);
             		});
 		});
+*/
 
 		// set up a rest server
 		var router = express.Router();
@@ -65,6 +69,7 @@ pc.script.create('MetaServer', function (context) {
 	};
 
 
+/*
 	MetaServer.prototype = {
 		GameServerStats: function (socket, arguments) {
 			console.log(arguments[0]+" "+arguments[1]+" player"+(arguments[1] != 1 ? "s." : "."));
@@ -77,6 +82,7 @@ pc.script.create('MetaServer', function (context) {
 			delete gameServers[socket.handshake.headers.referer];
 		}
 	};
+*/
 
 	return MetaServer;
 });

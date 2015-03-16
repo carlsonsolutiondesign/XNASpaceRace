@@ -21,12 +21,7 @@ pc.script.attribute('metaServer', 'string', 'http://xnaspacerace-44001.onmodulus
 pc.script.create('MetaClient', function (context) {
 	var MetaClient = function (entity) {
 		this.entity = entity;
-		if (typeof io !== 'undefined') {
-			this.socket = io('http://xnaspacerace-44001.onmodulus.net:80');
-		}
-		if (this.socket) {
-			// report on game servers from meta server
-			this.socket.on('Stats', function(gameServers) {
+		$.get('http://xnaspacerace-44001.onmodulus.net:80/api/servers/', function(gameServers) {
 			    // build table headers
 			    var columnSet = [];
 			    var headerTr$ = $('<tr/>');
@@ -59,12 +54,7 @@ pc.script.create('MetaClient', function (context) {
 
 				$("#metaServerTable").append(row$);
 			    }
-			});
-			// request game servers from meta server
-			this.socket.emit('PlayerInstanceRequest');
-		} else {
-			alert("Failed to connect to meta server");
-		}
+		});
 	};
 	return MetaClient;
 });
