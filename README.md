@@ -7,6 +7,6 @@ To install and start server:
 $ npm install
 $ node app.js
 
-go to localhost:1337 in your browser
+go to localhost:3000 in your browser
 
 or install on modulus.io
