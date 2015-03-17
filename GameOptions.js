@@ -111,7 +111,7 @@ pc.script.create('GameOptions', function (context) {
         PowerupRespawnTime: 5.0,
 
         // max ship velocity
-        MovementVelocity: 700.0,
+        MovementVelocity: 7.0,  // 700.0
         // max ship velocity with boost activated
         MovementVelocityBoost: 1200.0,
         // force applied by controls to move ship

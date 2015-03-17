@@ -69,45 +69,34 @@ pc.script.create('PlayerClient', function (context) {
 		// serverjoin is fired when the player has joined a game, 
 		// and the player's id is returned for further processing
 		ServerJoin: function (packet) {
-			console.log('serverjoin');
-			
 			if (gameManager) {
 				var msg = {
 					playerId: packet.playerId
 				};
 				gameManager.fire('PlayerJoined', msg);
-				console.log('playerId: ' + msg.playerId);
 			}
 		},
 		
 		ServerRejoin: function (packet) {
-			console.log('serverrejoin');
-			
 			if (gameManager) {
 				var msg = {
 					playerId: packet.playerId,
 					previousId: packet.previousId
 				};
 				gameManager.fire('PlayerRejoined', msg);
-				console.log('playerId: ' + msg.playerId);
 			}
 		},
 		
 		ServerQuit: function (packet) {
-			console.log('serverquit');
-			
 			if (gameManager) {
 				var msg = {
 					playerId: packet.playerId
 				};
 				gameManager.fire('PlayerQuit', msg);
-				console.log('playerId: ' + msg.playerId);
 			}
 		},
 		
 		ServerSpawn: function (packet) {
-			console.log('serverspawn:');
-			
 			if (gameManager) {
 				var msg = {
 					playerId: packet.playerId,
@@ -117,23 +106,16 @@ pc.script.create('PlayerClient', function (context) {
 					orientation: new pc.Vec3(packet.orientation.data[0], packet.orientation.data[1], packet.orientation.data[2])
 				};
 				gameManager.fire('PlayerSpawned', msg);
-			
-				console.log('Spawning: playerId: ' + msg.playerId 
-					      + ' playerNumber: ' + msg.playerNumber 
-						  + ' shipId: ' + msg.shipId 
-                          + ' position: (' + msg.position.x.toFixed(3) + ', ' + msg.position.y.toFixed(3) + ', ' + msg.position.z.toFixed(3) + ')' 
-                          + ' orientation: (' + msg.orientation.x.toFixed(3) + ', ' + msg.orientation.y.toFixed(3) + ', ' + msg.orientation.z.toFixed(3) + ')');
 			}
 		},
 		
 		ServerUpdate: function (packet) {
-		    //console.log('serverupdate');
-
 			if (gameManager) {
 				var msg = {
 					playerId: packet.playerId,
 					playerNumber: packet.playerNumber,
 					shipId: packet.shipId,
+                    dt: packet.dt,
 					position: new pc.Vec3(packet.position.data[0], packet.position.data[1], packet.position.data[2]),
 					orientation: new pc.Vec3(packet.orientation.data[0], packet.orientation.data[1], packet.orientation.data[2])
 				};
@@ -143,7 +125,6 @@ pc.script.create('PlayerClient', function (context) {
 		},
 
 		ServerScore: function (packet) {
-			console.log(packet.playerNumber + " " + packet.score);
 		},
 
 
@@ -175,15 +156,15 @@ pc.script.create('PlayerClient', function (context) {
 			        position: position,
                     orientation: orientation
 				};
-
 				socket.emit('ClientSpawn', response);
 			}
 		},
 		
-		ClientUpdate: function (shipId, position, orientation) {
+		ClientUpdate: function (shipId, dt, position, orientation) {
 			if (socket) {
 			    var response = {
 			        shipId: shipId,
+                    dt: dt,
 			        position: position,
 			        orientation: orientation
 			    };
