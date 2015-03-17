@@ -400,14 +400,27 @@ pc.script.create('GameManager', function (context) {
 
 		        player.addComponent('model', { type: 'asset' });
 
-		        context.systems.script.addComponent(player,
-                {
-                    scripts:
-                    [
-                        { url: 'PlayerShip.js', name: 'PlayerShip' },
-                        { url: 'Collider.js', name: 'Collider' }
-                    ]
-                });
+		        if (localPlayer) {
+		            context.systems.script.addComponent(player,
+                    {
+                        scripts:
+                        [
+                            { url: 'PlayerShip.js', name: 'PlayerShip' },
+                            { url: 'ShipController.js', name: 'ShipController' },
+                            { url: 'ChaseCamera.js', name: 'ChaseCamera' },
+                            { url: 'Collider.js', name: 'Collider' }
+                        ]
+                    });
+		        } else {
+		            context.systems.script.addComponent(player,
+                    {
+                        scripts:
+                        [
+                            { url: 'PlayerShip.js', name: 'PlayerShip' },
+                            { url: 'Collider.js', name: 'Collider' }
+                        ]
+                    });
+		        }
 
 		        player.script.PlayerShip.playerId = playerId
 		        player.script.PlayerShip.shipId = 0;
@@ -555,7 +568,14 @@ pc.script.create('GameManager', function (context) {
 		ProcessInput: function (dt, inputManager) {
 			
 			if (!inputManager)
-				return;
+			    return;
+
+			if (this.players) {
+			    var localPlayers = this.FindLocalPlayers();
+			    for (var i = 0; i < localPlayers; i++) {
+			        localPlayers[i].ProcessInput(dt, inputManager);
+			    }
+			}
 		},
 		
 		
@@ -742,9 +762,13 @@ pc.script.create('GameManager', function (context) {
                 menuCamera.enabled = false;
 
             var camera = context.root.findByName('Camera');
-			if (!camera)
+            if (camera) {
+                camera.script.CameraManager.enabled = false;
+            } else {
                 console.log('Camera not found')
+            }
 
+            /*
 			if (this.players) {
 			    var players = this.players.getChildren();
 			    for (var p = 0; p < players.length; p++) {
@@ -755,6 +779,7 @@ pc.script.create('GameManager', function (context) {
 			        }
                 }
 			}
+            */
         },
 
 

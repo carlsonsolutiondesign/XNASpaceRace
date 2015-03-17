@@ -4,7 +4,8 @@ pc.script.create('PlayerShip', function (context) {
     var PlayerShip = function (entity) {
         this.entity = entity;
         this.gameManger = null;
-        this.cameraManager = null;
+        this.shipController = null;
+        this.chaseCamera = null;
 
         this.isLocalPlayer = false;
         this.localId = null;
@@ -97,7 +98,23 @@ pc.script.create('PlayerShip', function (context) {
         },
 
 
-        // Called every frame, dt is time in seconds since last update
+        GetTransform: function () {
+            // return this.bobbing * this.transform;
+            return this.transform;
+        },
+
+
+        ProcessInput: function (dt, inputManager) {
+            if (!inputManager)
+                return;
+
+            if (!this.IsAlive())
+                return;
+
+            this.shipController.ProcessInput(dt, inputManager);
+        },
+
+
         Update: function (dt) {
             this.elapsedTime += dt;
 
@@ -118,9 +135,8 @@ pc.script.create('PlayerShip', function (context) {
                 return;
             }
 
-            if (this.simulate) {
-                this.Simulate();
-			}
+            // save position before moving
+            var lastPosition = new pc.Vec3().copy(this.shipController.position);
 
 			if (this.playerClient) {
 				this.nextUpdate -= dt;
@@ -148,7 +164,9 @@ pc.script.create('PlayerShip', function (context) {
 
         Spawn: function () {
 
-		    // reset energy, shield and boost
+            this.entity.script.ChaseCamera.setChaseEntity(this.entity);
+
+            // reset energy, shield and boost
 		    this.energy = 1.0;
 		    this.shield = 1.0;
 		    this.boost = 1.0;
@@ -181,7 +199,7 @@ pc.script.create('PlayerShip', function (context) {
 			    this.playerClient.fire('ClientSpawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 			}
 
-			if(this.cameraManager) {
+			if(this.shipController) {
 				if (spawnCameraOffset) {
 				    var entityOffset = this.entity.findByName('CameraOffset');
 				    if (entityOffset) {
