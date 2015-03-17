@@ -3,6 +3,7 @@ pc.script.create('PlayerShip', function (context) {
     // Creates a new PlayerShip instance
     var PlayerShip = function (entity) {
         this.entity = entity;
+        this.gameManger = null;
         this.cameraManager = null;
 
         this.isLocalPlayer = false;
@@ -17,7 +18,7 @@ pc.script.create('PlayerShip', function (context) {
 		this.nextUpdate = this.updateDT;
 
 		this.targetPositions = [];
-		this.targetOrientations = [];
+		this.modelLoaded = false;
 
 
         this.shield = 1.0;                                      // current shield charge (1.0 when ready to use)
@@ -27,7 +28,7 @@ pc.script.create('PlayerShip', function (context) {
         this.shieldUse = false;                                 // shield is active flag
         this.boostUse = false;                                  // boost is active flag
 
-        this.deadTime = 1.4;                                    // time left before ship respawn after death
+        this.deadTime = GameOptions.DeathTimeout;               // time left before ship respawn after death
 
         this.blaster = 0.0;                                     // blaster charge (1.0 when ready to fire)
         this.missile = 0.0;                                     // missile charge (1.0 when ready to fire)
@@ -68,8 +69,7 @@ pc.script.create('PlayerShip', function (context) {
             this.nextUpdate = this.updateDT;
 
             this.targetPositions = [];
-            this.targetOrientations = [];
-
+            this.modelLoaded = false;
 
             this.shield = 1.0;
             this.boost = 1.0;
@@ -78,7 +78,7 @@ pc.script.create('PlayerShip', function (context) {
             this.shieldUse = false;
             this.boostUse = false;
 
-            this.deadTime = 1.4;
+            this.deadTime = GameOptions.DeathTimeout;
 
             this.blaster = 0.0;
             this.missile = 0.0;
@@ -126,13 +126,23 @@ pc.script.create('PlayerShip', function (context) {
 				this.nextUpdate -= dt;
 				if (this.nextUpdate <= 0.0) {
 					this.nextUpdate = this.updateDT;
-					this.playerClient.fire('ClientUpdate', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
+					this.playerClient.fire('ClientUpdate', this.shipId, dt, this.entity.getPosition(), this.entity.getEulerAngles());
 				}
 			}
         },
 
 
         FindSpawnPoint: function () {
+            if (this.gameManager) {
+                var spawnPoints = this.gameManager.GetShipSpawnPointsList();
+
+                if (spawnPoints && spawnPoints.length > 0) {
+                    var spawnPointName = spawnPoints[Math.floor(Math.random() * spawnPoints.length)];
+                    var spawnPoint = context.root.findByName(spawnPointName);
+                    return spawnPoint;
+                }
+            }
+            return null;
         },
 
 
@@ -145,22 +155,21 @@ pc.script.create('PlayerShip', function (context) {
 		    this.missileCount = 3;
 
             // find spawn point
-		    this.targetPositions = [];
-		    this.targetOrientations = [];
-
 		    var spawnCameraOffset = null;
-		    var spawnPoint = context.root.findByName('Ship.Spawn.01');
+		    var spawnPoint = this.FindSpawnPoint();
 		    if (spawnPoint) {
 
-		        spawnCameraOffset = spawnPoint.findByName('Ship.01.Camera');
+		        spawnCameraOffset = spawnPoint.findByName('Spawn.CameraPos');
 
 		        // if the model is not loaded or the player changed ship load the new model
 			    if (!this.spawnedId || this.spawnedId != this.shipId) {
 			        this.spawnedId = this.shipId;
+			        this.modelLoaded = false;
 
 			        var asset = context.assets.getAssetById(this.shipId);
 			        context.assets.load(asset).then(function (resources) {
 			            this.entity.model.model = resources[0].clone();
+			            this.modelLoaded = true;
 			        }.bind(this));
 			    }
 
@@ -171,7 +180,7 @@ pc.script.create('PlayerShip', function (context) {
 			if (this.playerClient) {
 			    this.playerClient.fire('ClientSpawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 			}
-			
+
 			if(this.cameraManager) {
 				if (spawnCameraOffset) {
 				    var entityOffset = this.entity.findByName('CameraOffset');
@@ -191,56 +200,84 @@ pc.script.create('PlayerShip', function (context) {
         },
 
 
-		__update: function (dt) {
+        SvrSpawn: function (shipId, position, orientation) {
+            // reset energy, shield and boost
+            this.energy = 1.0;
+            this.shield = 1.0;
+            this.boost = 1.0;
+            this.missileCount = 3;
 
-		    if (!this.IsAlive())
+            // remove any pending simulations
+            //(this may not be the right thing to do, espcially since simulations could still be valid)
+            //this.targetPositions = [];
+
+            this.deadTime = 0.0;
+
+            this.shipId = shipId;
+
+            // if the model is not loaded or the player changed ship load the new model
+            if (!this.spawnedId || this.spawnedId != this.shipId) {
+                this.spawnedId = this.shipId;
+                this.modelLoaded = false;
+
+                var asset = context.assets.getAssetById(this.shipId);
+                context.assets.load(asset).then(function (resources) {
+                    this.entity.model.model = resources[0].clone();
+                    this.modelLoaded = true;
+                }.bind(this));
+            }
+
+            this.entity.setPosition(position);
+            this.entity.setEulerAngles(orientation);
+        },
+
+
+        SvrUpdate: function (dt, position, orientation) {
+            this.targetPositions.push({ time: dt, dt: 0, position: position, orientation: orientation });
+        },
+
+
+        NetworkUpdate: function (rdt) {
+
+            if (!this.IsAlive())
 		        return;
 
-		    // lerp from current position to target position
+		    // lerp/slerp from current position to target position/orientation
 		    if (this.targetPositions && this.targetPositions.length > 0) {
 
-		        var lerpEpsilon = 0.0001;
+		        this.targetPositions[0].dt += rdt;
+		        var dt = Math.min(1.0, Math.abs(this.targetPositions[0].dt / this.targetPositions[0].time));
 
-		        var pos = this.entity.getPosition();
-		        var dpos = new pc.Vec3().copy(pos);
-		        dpos.sub(this.targetPositions[0]);
+		        var ePos = this.entity.getPosition();
+		        var tPos = this.targetPositions[0].position;
 
-		        if (dpos.lengthSq() > lerpEpsilon) {
-		            pos.lerp(pos, this.targetPositions[0], dt);
-		            this.entity.setPosition(pos);
-		        } else {
-		            this.targetPositions.splice(0, 1);
-		        }
-		    }
+		        var removeTarget = false;
 
-		    if (this.targetOrientations && this.targetOrientations.length > 0) {
+		        ePos.lerp(ePos, tPos, dt);
+		        this.entity.setPosition(ePos);
 
-		        var slerpEpsilon = 0.001;
+		        var eAngles = this.entity.getEulerAngles();
+		        var q1 = new pc.Quat().setFromEulerAngles(eAngles.x, eAngles.y, eAngles.z);
 
-		        var angles = this.entity.getEulerAngles();
-		        var q1 = new pc.Quat().setFromEulerAngles(angles.x, angles.y, angles.z);
-		        var q2 = new pc.Quat().setFromEulerAngles(this.targetOrientations[0].x, this.targetOrientations[0].y, this.targetOrientations[0].z);
+		        var tAngles = this.targetPositions[0].orientation;
+		        var q2 = new pc.Quat().setFromEulerAngles(tAngles.x, tAngles.y, tAngles.z);
+
 		        var q3 = new pc.Quat().slerp(q1, q2, dt);
 
-		        //if (q3.lengthSq() > slerpEpsilon) {
-		        if (true) {
-		            this.entity.setEulerAngles(q3.getEulerAngles());
-		        } else {
-		            this.targetOrientations.splice(0, 1);
-		        }
-		    }
+		        this.entity.setEulerAngles(q3.getEulerAngles());
+
+		        var lerpEpsilon = 0.0001;
+       	        ePos.sub(tPos);
+		        if (dt >= 1.0 || ePos.lengthSq() <= lerpEpsilon)
+		            removeTarget = true;
+
+		        if(removeTarget){
+		            this.targetPositions.splice(0, 1);
+                }
+            }
 		},
 
 
-		SvrUpdate: function (position, orientation) {
-
-		    this.targetPositions.push(position);
-		    this.targetOrientations.push(orientation);
-
-		    this.__update(0.033);
-		},
-
-		
 		Simulate: function () {
 
             // temporary for testing purposes

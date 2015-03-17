@@ -88,6 +88,7 @@ pc.script.create('GameManager', function (context) {
         this.root = null;
         
         this.screenManager = null;
+        this.levelSettings = null;
         this.animSpriteManager = null;
         this.projectileManager = null;
         this.particleManager = null;
@@ -233,6 +234,7 @@ pc.script.create('GameManager', function (context) {
             this.root = context.root.getChildren()[0];
 
             this.screenManager = this.root.script.ScreenManager;
+            this.levelSettings = this.root.script.LevelSettings;
             this.animSpriteManager = this.root.script.AnimSpriteManager;
             this.projectileManager = this.root.script.ProjectileManager;
             this.particleManager = this.root.script.ParticleManager;
@@ -350,15 +352,20 @@ pc.script.create('GameManager', function (context) {
 		    var player = this.FindPlayer(msg.playerId);
 
 		    if (player) {
-		        if (!player.script.PlayerShip.isLocalPlayer)
-		            player.script.PlayerShip.Spawn();
+		        if (!player.script.PlayerShip.isLocalPlayer) {
+		            player.script.PlayerShip.SvrSpawn(msg.shipId, msg.position, msg.orientation);
+		        }
 		        return;
 		    }
 
 		    // if the player was not found, add them, spawn and update
-		    player = this.AddPlayer('networkPlayer-' + Date(), msg.playerId, false);
-			if (player)
-			    player.script.PlayerShip.shipId = msg.shipId;
+		    player = this.AddPlayer('networkPlayer-' + this.GetISOString(), msg.playerId, false);
+		    if (player) {
+		        player.setPosition(msg.position);
+		        player.setRotation(msg.orientation.x, msg.orientation.y, msg.orientation.z, 1.0);
+		        player.script.PlayerShip.shipId = msg.shipId;
+		        player.script.PlayerShip.SvrSpawn(msg.shipId, msg.position, msg.orientation);
+            }
 		},
 		
 		
@@ -366,15 +373,20 @@ pc.script.create('GameManager', function (context) {
 		    var player = this.FindPlayer(msg.playerId);
 
 		    if (player) {
-		        if (!player.script.PlayerShip.isLocalPlayer)
-		            player.script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
+		        if (!player.script.PlayerShip.isLocalPlayer) {
+		            player.script.PlayerShip.SvrUpdate(msg.dt, msg.position, msg.orientation);
+		        }
 		        return;
 		    }
 
 		    // if the player was not found, add them, spawn and update
-		    player = this.AddPlayer('networkPlayer-' + Date(), msg.playerId, false);
-            if(player)
-			    player.script.PlayerShip.shipId = msg.shipId;
+		    player = this.AddPlayer('networkPlayer-' + this.GetISOString(), msg.playerId, false);
+		    if (player) {
+		        player.setPosition(msg.position);
+		        player.setRotation(msg.orientation.x, msg.orientation.y, msg.orientation.z, 1.0);
+		        player.script.PlayerShip.shipId = msg.shipId;
+		        player.script.PlayerShip.SvrSpawn(msg.shipId, msg.position, msg.orientation);
+            }
 		},
 		
 		
@@ -400,6 +412,7 @@ pc.script.create('GameManager', function (context) {
 		        player.script.PlayerShip.playerId = playerId
 		        player.script.PlayerShip.shipId = 0;
 		        player.script.PlayerShip.isLocalPlayer = localPlayer;
+		        player.script.PlayerShip.gameManager = this;
 
 		        if (localPlayer) {
 		            player.script.PlayerShip.localId = playerId;
@@ -414,6 +427,18 @@ pc.script.create('GameManager', function (context) {
 		    }
 
             return player;
+		},
+
+
+		GetISOString: function () {
+		    var isoDate = (new Date).toISOString();
+		    return isoDate;
+		},
+
+
+		GetMilliseconds: function () {
+		    var milliseconds = (new Date).getTime();
+		    return milliseconds;
 		},
 
 
@@ -468,7 +493,16 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        GetWinner: function () {
+		GetShipSpawnPointsList: function () {
+		    if (this.levelSettings) {
+		        return this.levelSettings.GetShipSpawnPointsList(this.currentLevel);
+		    }
+
+		    return null;
+		},
+
+
+		GetWinner: function () {
 
             if (this.players) {
                 // since there are only two Winner textures to choose from on the EndScreen.js:
@@ -537,7 +571,7 @@ pc.script.create('GameManager', function (context) {
 
 			        // network players motion is simulated
 			        if (!players[i].script.PlayerShip.isLocalPlayer)
-			            players[i].script.PlayerShip.__update(dt);
+			            players[i].script.PlayerShip.NetworkUpdate(dt);
 			    }
 			}
 		},
