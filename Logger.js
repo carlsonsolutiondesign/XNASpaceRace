@@ -19,28 +19,30 @@ Log.debugLevel = Object.freeze({
 	All: {name: 'All', log: false, console: false },
 	Connection: { name: 'Connection', log: true, console: true },
 	Disconnect: { name: 'Disconnect', log: true, console: true },
-	UnrecognizedClient: { name: 'UnrecognizedClient', log: true, console: true },
+	UnrecognizedClient: { name: 'UnrecognizedClient', log: false, console: false },
 	ReportPlayers: { name: 'ReportPlayers', log: false, console: false },
 	ClientMessage: { name: 'ClientMessage', log: false, console: false },
-	ClientJoin: { name: 'ClientJoin', log: true, console: true },
-	ClientRejoin: { name: 'ClientRejoin', log: true, console: true },
-	ClientSpawn: { name: 'ClientSpawn', log: true, console: true },
-	ClientUpdate: { name: 'ClientUpdate', log: true, console: false },
-	ClientQuit: { name: 'ClientQuit', log: true, console: true },
-	ClientSimulate: { name: 'ClientSimulate', log: true, console: false },
+	ClientJoin: { name: 'ClientJoin', log: false, console: false },
+	ClientRejoin: { name: 'ClientRejoin', log: false, console: false },
+	ClientSpawn: { name: 'ClientSpawn', log: false, console: false },
+	ClientUpdate: { name: 'ClientUpdate', log: false, console: false },
+	ClientQuit: { name: 'ClientQuit', log: false, console: false },
+	ClientSimulate: { name: 'ClientSimulate', log: false, console: false },
 	DispatchMessages: { name: 'DispatchMessages', log: false, console: false },
 	NoDispatchMessages: { name: 'NoDispatchMessages', log: false, console: false },
 	DispatchNMessages: { name: 'DispatchNMessages', log: false, console: false },
-	WritePacket: { name: 'WritePacket', log: true, console: false },
+	WritePacket: { name: 'WritePacket', log: false, console: false },
 	AppendMessage: { name: 'AppendMessage', log: false, console: false }
 });
 
 
 Log.init = function (logFilename) {
 	try {
-		var ext = logFilename.substr(logFilename.lastIndexOf('.'));
-		var tmpName = logFilename.substr(0, logFilename.lastIndexOf('.')+1) + crypto.randomBytes(8).readUInt32LE(0) + ext;
-		fs.rename(logPath + logFilename, logPath + tmpName);
+		if (fs.existsSync(logFilename)) {
+			var ext = logFilename.substr(logFilename.lastIndexOf('.'));
+			var tmpName = logFilename.substr(0, logFilename.lastIndexOf('.') + 1) + crypto.randomBytes(8).readUInt32LE(0) + ext;
+			fs.rename(logPath + logFilename, logPath + tmpName);
+		}
 
 		this.logFilename = logFilename;
 		this.fileStream = fs.createWriteStream(logPath + this.logFilename);

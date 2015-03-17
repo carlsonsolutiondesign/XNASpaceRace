@@ -167,6 +167,7 @@ AppServer.prototype.ClientUpdate = function (socket, packet) {
 	log.write(log.debugLevel.ClientUpdate, socket.client.id);
 	
 	this.thePlayers[socket.client.id].shipId = packet.shipId;
+	this.thePlayers[socket.client.id].dt = packet.dt;
 	this.thePlayers[socket.client.id].position = packet.position;
 	this.thePlayers[socket.client.id].orientation = packet.orientation;
 	
@@ -174,6 +175,7 @@ AppServer.prototype.ClientUpdate = function (socket, packet) {
 		playerId: socket.client.id,
 		playerNumber: this.thePlayers[socket.client.id].playerNumber,
 		shipId: this.thePlayers[socket.client.id].shipId,
+		dt: this.thePlayers[socket.client.id].dt,
 		position: this.thePlayers[socket.client.id].position,
 		orientation: this.thePlayers[socket.client.id].orientation
 	};
@@ -299,6 +301,9 @@ io.on('connection', function (socket) {
 			var filters = packet.filters;
 			
 			var fileStream = fs.readFile(simulationPath + filename, { encoding: 'utf-8' }, function (err, data) {
+				if (err)
+					return;
+
 				// split the file into individual text lines
 				var messages = data.split('\n');
 				

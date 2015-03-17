@@ -88,6 +88,7 @@ pc.script.create('GameManager', function (context) {
         this.root = null;
         
         this.screenManager = null;
+        this.levelSettings = null;
         this.animSpriteManager = null;
         this.projectileManager = null;
         this.particleManager = null;
@@ -95,7 +96,8 @@ pc.script.create('GameManager', function (context) {
 		this.soundManager = null;
 		this.playerClient = null;
 
-        this.gameMode = null;
+		this.gameMode = null;
+		this.gameState = null;
         this.currentLevel = null;
 
         this.players = null;
@@ -187,6 +189,8 @@ pc.script.create('GameManager', function (context) {
     window.GameManager.MaxPlayers = 2;
     window.GameManager.PlayerId = Object.freeze({PlayerOne: 'AACC', PlayerTwo: 'BBDD'});
 
+    window.GameManager.GameState = Object.freeze({Menu: 0, Playing: 1});
+
     window.GameManager.RenderTechnique = Object.freeze(
     {
         PlainMapping: 0,                        // plain texture mapping
@@ -233,6 +237,7 @@ pc.script.create('GameManager', function (context) {
             this.root = context.root.getChildren()[0];
 
             this.screenManager = this.root.script.ScreenManager;
+            this.levelSettings = this.root.script.LevelSettings;
             this.animSpriteManager = this.root.script.AnimSpriteManager;
             this.projectileManager = this.root.script.ProjectileManager;
             this.particleManager = this.root.script.ParticleManager;
@@ -242,7 +247,7 @@ pc.script.create('GameManager', function (context) {
 
             this.currentLevel = 0;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
-
+            this.gameState = window.GameManager.GameState.Menu;
             this.AddPlayerListNode();
 
 			this.screenManager.on('LevelLoaded', this.onLevelLoaded, this);
@@ -350,15 +355,20 @@ pc.script.create('GameManager', function (context) {
 		    var player = this.FindPlayer(msg.playerId);
 
 		    if (player) {
-		        if (!player.script.PlayerShip.isLocalPlayer)
-		            player.script.PlayerShip.Spawn();
+		        if (!player.script.PlayerShip.isLocalPlayer) {
+		            player.script.PlayerShip.SvrSpawn(msg.shipId, msg.position, msg.orientation);
+		        }
 		        return;
 		    }
 
 		    // if the player was not found, add them, spawn and update
-		    player = this.AddPlayer('networkPlayer-' + Date(), msg.playerId, false);
-			if (player)
-			    player.script.PlayerShip.shipId = msg.shipId;
+		    player = this.AddPlayer('networkPlayer-' + this.GetISOString(), msg.playerId, false);
+		    if (player) {
+		        player.setPosition(msg.position);
+		        player.setRotation(msg.orientation.x, msg.orientation.y, msg.orientation.z, 1.0);
+		        player.script.PlayerShip.shipId = msg.shipId;
+		        player.script.PlayerShip.SvrSpawn(msg.shipId, msg.position, msg.orientation);
+            }
 		},
 		
 		
@@ -366,15 +376,20 @@ pc.script.create('GameManager', function (context) {
 		    var player = this.FindPlayer(msg.playerId);
 
 		    if (player) {
-		        if (!player.script.PlayerShip.isLocalPlayer)
-		            player.script.PlayerShip.SvrUpdate(msg.position, msg.orientation);
+		        if (!player.script.PlayerShip.isLocalPlayer) {
+		            player.script.PlayerShip.SvrUpdate(msg.dt, msg.position, msg.orientation);
+		        }
 		        return;
 		    }
 
 		    // if the player was not found, add them, spawn and update
-		    player = this.AddPlayer('networkPlayer-' + Date(), msg.playerId, false);
-            if(player)
-			    player.script.PlayerShip.shipId = msg.shipId;
+		    player = this.AddPlayer('networkPlayer-' + this.GetISOString(), msg.playerId, false);
+		    if (player) {
+		        player.setPosition(msg.position);
+		        player.setRotation(msg.orientation.x, msg.orientation.y, msg.orientation.z, 1.0);
+		        player.script.PlayerShip.shipId = msg.shipId;
+		        player.script.PlayerShip.SvrSpawn(msg.shipId, msg.position, msg.orientation);
+            }
 		},
 		
 		
@@ -388,18 +403,40 @@ pc.script.create('GameManager', function (context) {
 
 		        player.addComponent('model', { type: 'asset' });
 
-		        context.systems.script.addComponent(player,
-                {
-                    scripts:
-                    [
-                        { url: 'PlayerShip.js', name: 'PlayerShip' },
-                        { url: 'Collider.js', name: 'Collider' }
-                    ]
-                });
+		        if (localPlayer) {
+		            context.systems.script.addComponent(player,
+                    {
+                        scripts:
+                        [
+                            { url: 'PlayerShip.js', name: 'PlayerShip' },
+                            { url: 'ShipController.js', name: 'ShipController' },
+                            { url: 'ChaseCamera.js', name: 'ChaseCamera' },
+                            { url: 'Collider.js', name: 'Collider' }
+                        ]
+                    });
+
+		            player.script.PlayerShip.Initialize();
+		            player.script.ShipController.Initialize();
+		            player.script.ChaseCamera.Initialize();
+		            player.script.Collider.Initialize();
+		        } else {
+		            context.systems.script.addComponent(player,
+                    {
+                        scripts:
+                        [
+                            { url: 'PlayerShip.js', name: 'PlayerShip' },
+                            { url: 'Collider.js', name: 'Collider' }
+                        ]
+                    });
+
+		            player.script.PlayerShip.Initialize();
+		            player.script.Collider.Initialize();
+                }
 
 		        player.script.PlayerShip.playerId = playerId
 		        player.script.PlayerShip.shipId = 0;
 		        player.script.PlayerShip.isLocalPlayer = localPlayer;
+		        player.script.PlayerShip.gameManager = this;
 
 		        if (localPlayer) {
 		            player.script.PlayerShip.localId = playerId;
@@ -414,6 +451,18 @@ pc.script.create('GameManager', function (context) {
 		    }
 
             return player;
+		},
+
+
+		GetISOString: function () {
+		    var isoDate = (new Date).toISOString();
+		    return isoDate;
+		},
+
+
+		GetMilliseconds: function () {
+		    var milliseconds = (new Date).getTime();
+		    return milliseconds;
 		},
 
 
@@ -468,7 +517,16 @@ pc.script.create('GameManager', function (context) {
         },
 
 
-        GetWinner: function () {
+		GetShipSpawnPointsList: function () {
+		    if (this.levelSettings) {
+		        return this.levelSettings.GetShipSpawnPointsList(this.currentLevel);
+		    }
+
+		    return null;
+		},
+
+
+		GetWinner: function () {
 
             if (this.players) {
                 // since there are only two Winner textures to choose from on the EndScreen.js:
@@ -521,7 +579,16 @@ pc.script.create('GameManager', function (context) {
 		ProcessInput: function (dt, inputManager) {
 			
 			if (!inputManager)
-				return;
+			    return;
+
+			if (this.players) {
+			    var localPlayers = this.FindLocalPlayers();
+			    for (var i = 0; i < localPlayers.length; i++) {
+			        if (localPlayers[i].script.PlayerShip.isLocalPlayer) {
+			            localPlayers[i].script.PlayerShip.ProcessInput(dt, inputManager, i);
+                    }
+			    }
+			}
 		},
 		
 		
@@ -533,11 +600,11 @@ pc.script.create('GameManager', function (context) {
 			if (this.players) {
 			    var players = this.players.getChildren();
 			    for (var i = 0; i < players.length; i++) {
-			        players[i].script.PlayerShip.Update(dt);
-
 			        // network players motion is simulated
 			        if (!players[i].script.PlayerShip.isLocalPlayer)
-			            players[i].script.PlayerShip.__update(dt);
+			            players[i].script.PlayerShip.NetworkUpdate(dt);
+			        else
+			            players[i].script.PlayerShip.Update(dt);
 			    }
 			}
 		},
@@ -708,16 +775,24 @@ pc.script.create('GameManager', function (context) {
                 menuCamera.enabled = false;
 
             var camera = context.root.findByName('Camera');
-			if (!camera)
+            if (camera) {
+                camera.script.CameraManager.enabled = false;
+            } else {
                 console.log('Camera not found')
+            }
 
 			if (this.players) {
 			    var players = this.players.getChildren();
 			    for (var p = 0; p < players.length; p++) {
-			        players[p].script.PlayerShip.LevelLoaded(levelName);
+
 			        if (players[p].script.PlayerShip.isLocalPlayer) {
-                        if(camera)
-			                players[p].script.PlayerShip.cameraManager = camera.script.CameraManager;
+			            players[p].script.PlayerShip.Initialize(levelName);
+			            players[p].script.ShipController.Initialize(levelName);
+			            players[p].script.ChaseCamera.Initialize(levelName);
+			            players[p].script.Collider.Initialize(levelName);
+			        } else {
+			            players[p].script.PlayerShip.Initialize(levelName);
+			            players[p].script.Collider.Initialize(levelName);
 			        }
                 }
 			}

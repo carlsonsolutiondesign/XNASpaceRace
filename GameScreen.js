@@ -49,10 +49,26 @@ pc.script.create('GameScreen', function (context) {
 
             for (var i = 0; i < this.localPlayers.length; i++) {
                 if (inputManager.WasRightShoulderPressed(i) || inputManager.WasKeyPressed(i, pc.KEY_PAGE_UP)) {
-                    this.gameManager.StartSimulation('xnaspacerace.ship.01.simulation.log');
+                    switch(this.gameManager.currentLevel) {
+                        case GameManager.Levels.SmallSpace:
+                            this.gameManager.StartSimulation('xnaspacerace.ship.01.smallspace.simulation.log');
+                            break;
+
+                        case GameManager.Levels.RedSpace:
+                            this.gameManager.StartSimulation('xnaspacerace.ship.01.redspace.simulation.log');
+                            break;
+                    }
                 }
                 if (inputManager.WasLeftShoulderPressed(i) || inputManager.WasKeyPressed(i, pc.KEY_PAGE_DOWN)) {
-                    this.gameManager.StartSimulation('xnaspacerace.ship.02.simulation.log');
+                    switch (this.gameManager.currentLevel) {
+                        case GameManager.Levels.SmallSpace:
+                            this.gameManager.StartSimulation('xnaspacerace.ship.02.smallspace.simulation.log');
+                            break;
+
+                        case GameManager.Levels.RedSpace:
+                            this.gameManager.StartSimulation('xnaspacerace.ship.02.redspace.simulation.log');
+                            break;
+                    }
                 }
 
                 if (inputManager.WasKeyPressed(i, pc.KEY_ESCAPE) || inputManager.WasKeyPressed(i, pc.KEY_B) || inputManager.WasBackButtonPressed(i)) {
