@@ -40,13 +40,12 @@ pc.script.create('ChaseCamera', function (context) {
 
     ChaseCamera.prototype = {
         
-        // Called once after all resources are loaded and before the first update
-        initialize: function () {
-            this.camera = context.root.findByName(this.cameraName);
+        Initialize: function (levelName) {
+            this.camera = context.root.findByName('Camera');
             
-            if (this.entity && this.entity.collision) {
-                this.entity.collision.on('collisionstart', this.OnCollisionStart, this);
-            }
+            //if (this.entity && this.entity.collision) {
+            //    this.entity.collision.on('collisionstart', this.OnCollisionStart, this);
+            //}
         },
 
 
@@ -65,7 +64,7 @@ pc.script.create('ChaseCamera', function (context) {
                 this.desiredPositionOffset.set(localPos.x, localPos.y, localPos.z);
             }
 
-            this.camera = context.root.findByName(this.cameraName);
+            this.camera = context.root.findByName('Camera');
             if (this.camera) {
                 this.updateWorldPositions();
                 this.camera.setPosition(this.desiredPosition);
@@ -73,8 +72,7 @@ pc.script.create('ChaseCamera', function (context) {
         },
         
         
-        // Called every frame, dt is time in seconds since last update
-        update: function (dt) {
+        Update: function (dt) {
 
             if (!this.target || !this.camera)
                 return;

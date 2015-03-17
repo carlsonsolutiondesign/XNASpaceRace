@@ -6,8 +6,6 @@ pc.script.create('ShipController', function (context) {
         this.entity = entity;
         this.root = null;
 
-        this.gameOptions = null;
-        
         this.position = new pc.Vec3();                      // player position
         this.velocity = new pc.Vec3();                      // velocity in local player space
         this.force = new pc.Vec3();                         // forces in local player space
@@ -32,11 +30,9 @@ pc.script.create('ShipController', function (context) {
 
     ShipController.prototype = {
         
-        // Called once after all resources are loaded and before the first update
-        initialize: function () {
+        Initialize: function (levelName) {
             
             this.root = context.root.getChildren()[0];
-            this.gameOptions = this.root.script.GameOptions;
             
             this.position.copy(pc.Vec3.ZERO);
             this.velocity.copy(pc.Vec3.ZERO);
@@ -46,17 +42,17 @@ pc.script.create('ShipController', function (context) {
             this.rotationVelocityAxis.copy(pc.Vec3.ZERO);
             this.rotationForce.copy(pc.Vec3.ZERO);
             
-            this.maxVelocity = this.gameOptions.MovementVelocity;
-            this.dampingForce = this.gameOptions.MovementForceDamping;
-            this.inputForce = this.gameOptions.MovementForce;
+            this.maxVelocity = GameOptions.MovementVelocity;
+            this.dampingForce = GameOptions.MovementForceDamping;
+            this.inputForce = GameOptions.MovementForce;
             
-            this.maxRotationVelocity = this.gameOptions.MovementRotationVelocity;
-            this.dampingRotationForce = this.gameOptions.MovementRotationForceDamping;
-            this.inputRotationForce = this.gameOptions.MovementRotationForce;
+            this.maxRotationVelocity = GameOptions.MovementRotationVelocity;
+            this.dampingRotationForce = GameOptions.MovementRotationForceDamping;
+            this.inputRotationForce = GameOptions.MovementRotationForce;
         },
 
 
-        reset: function(m) {
+        Reset: function(m) {
             
             this.rotation.copy(m);
             m.getTranslation(this.position);
@@ -105,7 +101,7 @@ pc.script.create('ShipController', function (context) {
         },
         
         
-        processInput: function(dt, inputManager, player) {
+        ProcessInput: function(dt, inputManager, player) {
 
             if(!inputManager)
                 return;
@@ -117,7 +113,7 @@ pc.script.create('ShipController', function (context) {
             this.rotationForce.x = this.inputRotationForce * rightStick.x;
             this.rotationForce.y = -this.inputRotationForce * rightStick.y;
             this.rotationForce.z = 0.0;
-            
+
             // camera bank
             if (inputManager.WasRightShoulderPressed(player)) {
                 this.rotationForce.z += this.inputRotationForce;
@@ -147,25 +143,25 @@ pc.script.create('ShipController', function (context) {
                 this.rotationForce.x = -this.inputRotationForce;
             if (inputManager.IsKeyDown(player, pc.KEY_LEFT))
                 this.rotationForce.y = this.inputRotationForce;
-            if (inputMananger.IsKeyDown(player, pc.KEY_RIGHT))
+            if (inputManager.IsKeyDown(player, pc.KEY_RIGHT))
                 this.rotationForce.y = -this.inputRotationForce;
 
             // keyboard camera bank
-            if (this.inputManager.IsKeyDown(player, pc.KEY_A))
+            if (inputManager.IsKeyDown(player, pc.KEY_A))
                 this.rotationForce.z = -this.inputRotationForce;
-            if (this.inputManager.IsKeyDown(player, pc.KEY_D))
+            if (inputManager.IsKeyDown(player, pc.KEY_D))
                 this.rotationForce.z = this.inputRotationForce;
 
             // move forward/backward
-            if (this.inputManager.IsKeyDown(player, pc.KEY_W))
-                this.force.z = this.inputForce;
-            if (this.inputManager.IsKeyDown(player, pc.KEY_S))
+            if (inputManager.IsKeyDown(player, pc.KEY_W))
                 this.force.z = -this.inputForce;
+            if (inputManager.IsKeyDown(player, pc.KEY_S))
+                this.force.z = this.inputForce;
 
             // slide left/right
-            if (this.inputManager.IsKeyDown(player, pc.KEY_Q))
+            if (inputManager.IsKeyDown(player, pc.KEY_Q))
                 this.force.x = -this.inputForce;
-            if (this.inputManager.IsKeyDown(player, pc.KEY_E))
+            if (inputManager.IsKeyDown(player, pc.KEY_E))
                 this.force.x = this.inputForce;
         },
 
@@ -223,26 +219,31 @@ pc.script.create('ShipController', function (context) {
             tmp.scale(this.velocity.z * dt);
             this.position.add(tmp);
 
+            // apply rotational force
+            var v = new pc.Vec3().copy(this.rotationForce);
+            v.scale(dt);
+            this.rotationVelocityAxis.add(v);
+
             // apply rotational damping
             if(this.rotationForce.x > -0.001 && this.rotationForce.x < 0.001) {
                 if (this.rotationForce.x > 0) {
-                    this.rotationVelocityAxis.x = Math.max(0.0, this.rotationVelocity.x - this.dampingRotationForce * dt);
+                    this.rotationVelocityAxis.x = Math.max(0.0, this.rotationVelocityAxis.x - this.dampingRotationForce * dt);
                 } else {
-                    this.rotationVelocityAxis.x = Math.min(0.0, this.rotationVelocity.x + this.dampingRotationForce * dt);
+                    this.rotationVelocityAxis.x = Math.min(0.0, this.rotationVelocityAxis.x + this.dampingRotationForce * dt);
                 }
             }
             if(this.rotationForce.y > -0.001 && this.rotationForce.y < 0.001) {
                 if (this.rotationForce.y > 0) {
-                    this.rotationVelocityAxis.y = Math.max(0.0, this.rotationVelocity.y - this.dampingRotationForce * dt);
+                    this.rotationVelocityAxis.y = Math.max(0.0, this.rotationVelocityAxis.y - this.dampingRotationForce * dt);
                 } else {
-                    this.rotationVelocityAxis.y = Math.min(0.0, this.rotationVelocity.y + this.dampingRotationForce * dt);
+                    this.rotationVelocityAxis.y = Math.min(0.0, this.rotationVelocityAxis.y + this.dampingRotationForce * dt);
                 }
             }
             if(this.rotationForce.z > -0.001 && this.rotationForce.z < 0.001) {
                 if (this.rotationForce.z > 0) {
-                    this.rotationVelocityAxis.z = Math.max(0.0, this.rotationVelocity.z - this.dampingRotationForce * dt);
+                    this.rotationVelocityAxis.z = Math.max(0.0, this.rotationVelocityAxis.z - this.dampingRotationForce * dt);
                 } else {
-                    this.rotationVelocityAxis.z = Math.min(0.0, this.rotationVelocity.z + this.dampingRotationForce * dt);
+                    this.rotationVelocityAxis.z = Math.min(0.0, this.rotationVelocityAxis.z + this.dampingRotationForce * dt);
                 }
             }
 
@@ -250,7 +251,7 @@ pc.script.create('ShipController', function (context) {
             var rotationVelocityLength = this.rotationVelocityAxis.length();
             if (rotationVelocityLength > this.maxRotationVelocity) {
                 this.rotationVelocityAxis.normalize();
-                this.rotationvelocityAxis.scale(this.maxRotationVelocity);
+                this.rotationVelocityAxis.scale(this.maxRotationVelocity);
             }
 
             // apply rotation velocity

@@ -4,8 +4,6 @@ pc.script.create('PlayerShip', function (context) {
     var PlayerShip = function (entity) {
         this.entity = entity;
         this.gameManger = null;
-        this.shipController = null;
-        this.chaseCamera = null;
 
         this.isLocalPlayer = false;
         this.localId = null;
@@ -42,22 +40,15 @@ pc.script.create('PlayerShip', function (context) {
 
         this.camera3DPerson = true;
 
-        this.elapsedTime = 0.0;
+        this.transform = new pc.Mat4();
 
-        this.simulate = false;
-        this.nextSimulationDelta = 3;
-        this.lastSimulation = 0;
+        this.elapsedTime = 0.0;
     };
 
 
     PlayerShip.prototype = {
 
-        // Called once after all resources are loaded and before the first update
-        initialize: function () {
-        },
-
-
-        LevelLoaded: function (levelName) {
+        Initialize: function (levelName) {
 
             this.entity.setPosition(0.0, 0.0, 0.0);
             this.entity.setLocalPosition(0.0, 0.0);
@@ -92,9 +83,9 @@ pc.script.create('PlayerShip', function (context) {
 
             this.camera3DPerson = true;
 
-            this.elapsedTime = 0.0;
+            this.transform = new pc.Mat4();
 
-            this.simulate = false;
+            this.elapsedTime = 0.0;
         },
 
 
@@ -104,14 +95,15 @@ pc.script.create('PlayerShip', function (context) {
         },
 
 
-        ProcessInput: function (dt, inputManager) {
+        ProcessInput: function (dt, inputManager, player) {
+
             if (!inputManager)
                 return;
 
             if (!this.IsAlive())
                 return;
 
-            this.shipController.ProcessInput(dt, inputManager);
+            this.entity.script.ShipController.ProcessInput(dt, inputManager, player);
         },
 
 
@@ -136,9 +128,23 @@ pc.script.create('PlayerShip', function (context) {
             }
 
             // save position before moving
-            var lastPosition = new pc.Vec3().copy(this.shipController.position);
+            var lastPosition = new pc.Vec3().copy(this.entity.script.ShipController.position);
 
-			if (this.playerClient) {
+            this.entity.script.ShipController.Update(dt);
+
+            var trans = this.entity.script.ShipController.position;
+            var rot = new pc.Quat().setFromMat4(this.entity.script.ShipController.rotation);
+            var scale = new pc.Vec3().copy(pc.Vec3.ONE);
+            
+            this.transform.setTRS(trans, rot, scale);
+
+            this.transform.getTranslation(trans);
+            this.entity.setPosition(trans);
+            this.entity.setEulerAngles(this.transform.getEulerAngles());
+
+            this.entity.script.ChaseCamera.Update(dt);
+
+            if (this.playerClient) {
 				this.nextUpdate -= dt;
 				if (this.nextUpdate <= 0.0) {
 					this.nextUpdate = this.updateDT;
@@ -163,8 +169,6 @@ pc.script.create('PlayerShip', function (context) {
 
 
         Spawn: function () {
-
-            this.entity.script.ChaseCamera.setChaseEntity(this.entity);
 
             // reset energy, shield and boost
 		    this.energy = 1.0;
@@ -192,29 +196,30 @@ pc.script.create('PlayerShip', function (context) {
 			    }
 
 			    this.entity.setPosition(spawnPoint.getPosition());
-				this.entity.setEulerAngles(spawnPoint.getEulerAngles());
+			    this.entity.setEulerAngles(spawnPoint.getEulerAngles());
+
+			    this.entity.script.ShipController.Reset(this.entity.getWorldTransform());
 			}
 
 			if (this.playerClient) {
 			    this.playerClient.fire('ClientSpawn', this.shipId, this.entity.getPosition(), this.entity.getEulerAngles());
 			}
 
-			if(this.shipController) {
-				if (spawnCameraOffset) {
-				    var entityOffset = this.entity.findByName('CameraOffset');
-				    if (entityOffset) {
-				        entityOffset.setLocalPosition(spawnCameraOffset.getLocalPosition());
-				        entityOffset.setLocalRotation(spawnCameraOffset.getLocalRotation());
+			if (spawnCameraOffset) {
+			    var entityOffset = this.entity.findByName('CameraOffset');
+			    if (entityOffset) {
+			        entityOffset.setLocalPosition(spawnCameraOffset.getLocalPosition());
+			        entityOffset.setLocalRotation(spawnCameraOffset.getLocalRotation());
 
-				        var camera = context.root.findByName('Camera');
-				        if (camera) {
-				            camera.setPosition(spawnCameraOffset.getPosition());
-				            camera.setRotation(spawnCameraOffset.getRotation());
-				            this.cameraManager.setCamera(this.entity.name);
-				        }
-				    }
-				}
-	        }
+			        var camera = context.root.findByName('Camera');
+			        if (camera) {
+			            camera.setPosition(spawnCameraOffset.getPosition());
+			            camera.setRotation(spawnCameraOffset.getRotation());
+			            this.entity.script.ChaseCamera.camera = camera;
+			            this.entity.script.ChaseCamera.setChaseEntity(this.entity);
+                    }
+			    }
+			}
         },
 
 

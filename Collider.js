@@ -8,19 +8,13 @@ pc.script.create('Collider', function (context) {
 
     Collider.prototype = {
         
-        // Called once after all resources are loaded and before the first update
-		initialize: function () {
+		Initialize: function () {
 			if (this.entity && this.entity.collision) {
 				this.entity.collision.on('collisionstart', this.onCollisionStart, this);
 			}
         },
 
 
-        // Called every frame, dt is time in seconds since last update
-        update: function (dt) {
-        },
-        
-        
         onCollisionStart: function(result) {
             if(result.other && result.other.rigidbody) {
                 var dir = new pc.Vec3().copy(result.contacts[0].normal);

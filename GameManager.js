@@ -96,7 +96,8 @@ pc.script.create('GameManager', function (context) {
 		this.soundManager = null;
 		this.playerClient = null;
 
-        this.gameMode = null;
+		this.gameMode = null;
+		this.gameState = null;
         this.currentLevel = null;
 
         this.players = null;
@@ -188,6 +189,8 @@ pc.script.create('GameManager', function (context) {
     window.GameManager.MaxPlayers = 2;
     window.GameManager.PlayerId = Object.freeze({PlayerOne: 'AACC', PlayerTwo: 'BBDD'});
 
+    window.GameManager.GameState = Object.freeze({Menu: 0, Playing: 1});
+
     window.GameManager.RenderTechnique = Object.freeze(
     {
         PlainMapping: 0,                        // plain texture mapping
@@ -244,7 +247,7 @@ pc.script.create('GameManager', function (context) {
 
             this.currentLevel = 0;
             this.gameMode = window.GameManager.GameMode.SinglePlayer;
-
+            this.gameState = window.GameManager.GameState.Menu;
             this.AddPlayerListNode();
 
 			this.screenManager.on('LevelLoaded', this.onLevelLoaded, this);
@@ -411,6 +414,11 @@ pc.script.create('GameManager', function (context) {
                             { url: 'Collider.js', name: 'Collider' }
                         ]
                     });
+
+		            player.script.PlayerShip.Initialize();
+		            player.script.ShipController.Initialize();
+		            player.script.ChaseCamera.Initialize();
+		            player.script.Collider.Initialize();
 		        } else {
 		            context.systems.script.addComponent(player,
                     {
@@ -420,7 +428,10 @@ pc.script.create('GameManager', function (context) {
                             { url: 'Collider.js', name: 'Collider' }
                         ]
                     });
-		        }
+
+		            player.script.PlayerShip.Initialize();
+		            player.script.Collider.Initialize();
+                }
 
 		        player.script.PlayerShip.playerId = playerId
 		        player.script.PlayerShip.shipId = 0;
@@ -572,8 +583,10 @@ pc.script.create('GameManager', function (context) {
 
 			if (this.players) {
 			    var localPlayers = this.FindLocalPlayers();
-			    for (var i = 0; i < localPlayers; i++) {
-			        localPlayers[i].ProcessInput(dt, inputManager);
+			    for (var i = 0; i < localPlayers.length; i++) {
+			        if (localPlayers[i].script.PlayerShip.isLocalPlayer) {
+			            localPlayers[i].script.PlayerShip.ProcessInput(dt, inputManager, i);
+                    }
 			    }
 			}
 		},
@@ -587,11 +600,11 @@ pc.script.create('GameManager', function (context) {
 			if (this.players) {
 			    var players = this.players.getChildren();
 			    for (var i = 0; i < players.length; i++) {
-			        players[i].script.PlayerShip.Update(dt);
-
 			        // network players motion is simulated
 			        if (!players[i].script.PlayerShip.isLocalPlayer)
 			            players[i].script.PlayerShip.NetworkUpdate(dt);
+			        else
+			            players[i].script.PlayerShip.Update(dt);
 			    }
 			}
 		},
@@ -768,18 +781,21 @@ pc.script.create('GameManager', function (context) {
                 console.log('Camera not found')
             }
 
-            /*
 			if (this.players) {
 			    var players = this.players.getChildren();
 			    for (var p = 0; p < players.length; p++) {
-			        players[p].script.PlayerShip.LevelLoaded(levelName);
+
 			        if (players[p].script.PlayerShip.isLocalPlayer) {
-                        if(camera)
-			                players[p].script.PlayerShip.cameraManager = camera.script.CameraManager;
+			            players[p].script.PlayerShip.Initialize(levelName);
+			            players[p].script.ShipController.Initialize(levelName);
+			            players[p].script.ChaseCamera.Initialize(levelName);
+			            players[p].script.Collider.Initialize(levelName);
+			        } else {
+			            players[p].script.PlayerShip.Initialize(levelName);
+			            players[p].script.Collider.Initialize(levelName);
 			        }
                 }
 			}
-            */
         },
 
 
